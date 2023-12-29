@@ -30,6 +30,7 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
 **Exit:** Exit.
 
 **Input Options:**
+![Input Options Panel](./images/page1.png)
 
 **Physical Controller:** A controller that matches what you're using. This will be used to set the layout for each mapping as well as the button labels on the Preview tab. The default controllers can be used in most cases, but you may need to load a custom config in the case of arcade panels that don't use the default mapping or fightsticks with non-standard layouts. Default controllers are: *(WIP: Add labeled images with default button order)*
  - **XInput (Xbox Style):** standard XBox 360/One/[Series](https://www.xbox.com/en-US/accessories/controllers/xbox-wireless-controller). If you are using a program like DS4Windows to use your DS4/DualSense/Switch controller as XInput, select this one to get the proper button layout.
@@ -40,7 +41,7 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
  - **Modern Fightstick:** 8 buttons, with the 3rd column being R1/R2 and the 4th L1/L2 (as seen [here](https://download.8bitdo.com/Manual/Controller/Xbox/Arcade-Stick-for-Xbox.pdf?20231201)). Assumes the stick will be set to D-Pad mode. Older sticks may need to create a custom version of this, as the L/R button placement varied.
  - **6/4 Button (KB):** An arcade panel with 6 buttons each for P1/2 and 4 buttons for 3/4, using default keyboard inputs. Similar to the panel shown [here](https://99livesarcade.com/store/ols/products/four-player-control-panels-arcade1up-only-32x12x4-approx-sanwa-sticks).
  - **6 Buttons w/Offset 7th (KB):** An arcade panel using a hybrid layout with 6 standard buttons and one offset to the lower left, common for layouts that work for Neo Geo and 6-button fighting games. The layout assumes the offset button is #7, and does add an 8th assumed to be left of it, but nothing requires it. An example is the player 1 & 2 controls on [this](https://www.ultimarc.com/arcade-control-panel/) panel.
- - **I-PAC 4 - All Inputs (KB):** An arcade panel set up for 4 players, 8 buttons each, using the default [I-PAC 4](https://www.ultimarc.com/control-interfaces/i-pacs/i-pac4-board/) keyboard mappings. This should also work for the I-PAC 2, but will map keys as if there were 4 players. The default mappings do include keys that MAME uses for menus etc, it may be a good idea to use the Hotkeys option if using this for more than 2 players. If used as a base for custom mapping, unused players will be ignored.
+ - **IPAC 4 - All Inputs (KB):** An arcade panel set up for 4 players, 8 buttons each, using the default [IPAC 4](https://www.ultimarc.com/control-interfaces/i-pacs/i-pac4-board/) keyboard mappings. This should also work for the IPAC 2, but will map keys as if there were 4 players. The default mappings do include keys that MAME uses for menus etc, it may be a good idea to use the Hotkeys option if using this for more than 2 players. If used as a base for custom mapping, unused players will be ignored.
  - **Future?:** Possible additions for controllers with unique layouts and other features.
    - The Hori Fighting Commander Octa for PC will likely be added as a new base configuration at the end of January when it releases, as having 6 face buttons, a D-Pad, and two analog sticks is fairly unique  and well suited for emulators. This could also be used as a base for Retro-Bit's Saturn analog controller, which has the same specs.
    - Older fightsticks may be worth adding, though most of them could be done with a custom controller mapped to the Retroarch 6-button layout or the Modern Fightstick layout.
@@ -58,6 +59,7 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
  - **Single Button on 1 & 2:** If a game has only one button, its function is duplicated on controller buttons 1 & 2.
  
  **Advanced Options:**
+ ![Advanced Options tab](./images/page2.png)
  
  **Mapping Types:** These are the different options that can be applied. Defaults will apply to any game not listed in the specific mappings. All other mappings apply to a specific subset of games, based on the series or control type.
  
@@ -116,8 +118,10 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
  **Use Fixed Device Order:** Allows you to use the Fixed Order tab to map Joystick, Lightgun, and Mouse controls in a specific order. Good to keep specific inputs on arcade cabinets etc.
  
  **Preview:** Lets you see what the controls for specific games will look like with the current options. You can search by title or romset name, or just click a game on the list.
+ ![Preview Tab](./images/page3.png)
 
 **Fixed Order:** This lets you select the devices to map in order. Note that while MAME does enumerate keyboard devices, it does not support individual keyboards, so those devices are hidden. In addition, Windows will autopopulate 4 XInput joysticks.
+![Fixed Order tab](./images/page4.png)
 **Get List:** Loads MAME (must be closed afterwards) to get the list of available devices. Only needs to be run once unless you change out devices.
 🕹️: Adds the currently selected joystick device to the list.
 🔫: Adds the currently selected lightgun device to the list.
@@ -126,6 +130,7 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
 Clear All: Removes all devices from the mappings list.
 
 **ini Options:** This tab has some options that will allow you to edit mame.ini easily, separate from the mappings.
+![ini Options tab](./images/page5.png)
 
 **Graphics:**
 
@@ -133,28 +138,30 @@ Clear All: Removes all devices from the mappings list.
  - **BGFX Rendering:** if bgfx is selected as the video mode, select which backend it will use.
  - **Screen Chains (CRT):** Select the bgfx filtering to use for games with a CRT display (most games).
  - **Screen Chains (LCD):** Select the bgfx filtering to use for games with an LCD display (mostly handhelds or devices)
- - **Screen Chains (SVG):** Select the bgfx filtering to games that use vector images as a display (segmented LCDs like Game & Watch games).
+ - **Screen Chains (Other):** Select the bgfx filtering to games that use vector images as a display (segmented LCDs like Game & Watch games) or an otherwise uncategorized display.
  - **Full Screen:** Launch in full screen vs. Windowed mode.
  - **Triple Buffering:** May help with screen tearing due to sync issues.
+ - **Use HLSL for Vector Displays:** This will create an ini file to activate HLSL graphics for vector-based games (Windows only). If you have bgfx on, it will use it as a bgfx chain, otherwise it will set the video mode to d3d for those games and enable HLSL. It will also populate the default MAME color vector options if they don't already exist in vector.ini - you can change them as you like and they won't be overwritten.
  - **Mixed Screens:** Creates separate ini files for games with mixed display types - ie Silent Scope using a CRT for the main game and an LCD for the scope. This will use your CRT chains for the CRT and LCD chains for the LCD.
 
  **Artwork:**
  
-
  - **Crop to Screen:** This will set the game's display to the maximum size, then use the artwork only in the blank areas plus overlays/backdrops. If turned off, the game will scale to fit the artwork, possibly resulting in a smaller screen area.
+ - **Default Artwork (H):** Sets a default artwork to display for horizontal games if it doesn't have its own. It just needs the filename (minus extension), the **...** button will let you browse the MAME artwork folder to select one.
+ - **Default Artwork (V):** Same, but for vertically oriented games.
 
 **State:**
 
  - **Autosave:** Will create a save state when a machine is closed, and autoload it when starting it again. May not work for all machines.
- - **Rewind:** Enable the ability to step backwards one frame at a time when paused.
- - **Rewind Capacity:** Choose how much space to devote to rewind save states, older states will be overwritten when space runs out.
+ - **Rewind:** Enable the ability to step backwards one frame at a time when paused. If using hotkey mode, Coin + Up will pause, Coin + Left will step backwards.
+ - **Rewind Capacity (MB):** Choose how much space (in megabytes) to devote to rewind save states, older states will be overwritten when space runs out.
 
 ## Command Line
 -v --verbose: Will output the debug log to the console while running (only when running via python MAMEMapper.py -v, the standalone exe has no console window). Whether this option is used or not, MAMEMapper.log will be created/re-created for each run.
 
 ## Data File Tools
 The tools.py file is used to build the gamelist.json that contains all the game information including player count, control types, control labels, and the mappings that apply to each game. In most cases, you won't need to touch this, but if you are trying to create a new mapping file, this would be how to add it in.
-The required files to create gamelist.json:
+The required files to create gamelist.json (the ones used for the current build are already in the /datasources folder):
  - **A MAME xml file.** The one used by default is generated by the Arcade64 fork, which leaves out consoles and other non-arcade machines. This prevents custom configs for those from being overwritten.
  - **controls.json.** Can be downloaded from [here](https://github.com/yo1dog/controls-dat-json), or a tool can be used to convert controls.dat to json yourself. The original controls.dat file has not been updated in a while, so many games will be missing control labels in the preview.
  - **csv files for each mapping.** You should have a .json in the /mappings folder, and a .csv in the /datasources folder with matching filenames - ie sf.json and sf.csv. The csv file should be a "Detailed (csv)" export from the [Arcade Database](http://adb.arcadeitalia.net/lista_mame.php). This can be pieced together from multiple exports, just make sure it includes all the games the mapping should apply to, and only those games.
