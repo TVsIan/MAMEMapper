@@ -26,11 +26,14 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
 
 ## Options etc.
 **Locate MAME:** Select your mame.exe file so that MAMEMapper knows where to put the generated files as well as modifying the ini file if selected.
+
 **Run:** Generate using the currently selected options. Note this will replace any files in the cfg folder in cfg mode, or a previously generated ctrlr file (for that layout, including custom controllers that use the same layout) in ctrlr mode. You will be warned once before generating.
+
 **Exit:** Exit.
 
-**Input Options:**
 ![Input Options Panel](./images/page1.png)
+
+**Input Options:**
 
 **Physical Controller:** A controller that matches what you're using. This will be used to set the layout for each mapping as well as the button labels on the Preview tab. The default controllers can be used in most cases, but you may need to load a custom config in the case of arcade panels that don't use the default mapping or fightsticks with non-standard layouts. Default controllers are: *(WIP: Add labeled images with default button order)*
  - **XInput (Xbox Style):** standard XBox 360/One/[Series](https://www.xbox.com/en-US/accessories/controllers/xbox-wireless-controller). If you are using a program like DS4Windows to use your DS4/DualSense/Switch controller as XInput, select this one to get the proper button layout.
@@ -58,9 +61,10 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
  - **Move Primary Button:** If a game has more than one button, and button #1 is named "Jump" or "A" (Playchoice/Vs System), it will flip the button mappings for buttons 1 & 2 for that game. For most games, Jump is on button 2, so this will make the few outliers (TMNT is a notable one) have consistent controls.
  - **Single Button on 1 & 2:** If a game has only one button, its function is duplicated on controller buttons 1 & 2.
  
- **Advanced Options:**
  ![Advanced Options tab](./images/page2.png)
  
+ **Advanced Options:**
+  
  **Mapping Types:** These are the different options that can be applied. Defaults will apply to any game not listed in the specific mappings. All other mappings apply to a specific subset of games, based on the series or control type.
  
  - **Defaults:** Sets default options. If turned off, only the games in the other mappings will apply, everything else will be ignored. In this case, most of the Layout Preference options will be ignored.
@@ -117,11 +121,14 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
  **Add ctrlr to mame.ini:** Will add the created ctrlr file to the existing mame.ini so it loads automatically.
  **Use Fixed Device Order:** Allows you to use the Fixed Order tab to map Joystick, Lightgun, and Mouse controls in a specific order. Good to keep specific inputs on arcade cabinets etc.
  
- **Preview:** Lets you see what the controls for specific games will look like with the current options. You can search by title or romset name, or just click a game on the list.
  ![Preview Tab](./images/page3.png)
+ 
+ **Preview:** Lets you see what the controls for specific games will look like with the current options. You can search by title or romset name, or just click a game on the list.
+ 
+![Fixed Order tab](./images/page4.png)
 
 **Fixed Order:** This lets you select the devices to map in order. Note that while MAME does enumerate keyboard devices, it does not support individual keyboards, so those devices are hidden. In addition, Windows will autopopulate 4 XInput joysticks.
-![Fixed Order tab](./images/page4.png)
+
 **Get List:** Loads MAME (must be closed afterwards) to get the list of available devices. Only needs to be run once unless you change out devices.
 🕹️: Adds the currently selected joystick device to the list.
 🔫: Adds the currently selected lightgun device to the list.
@@ -129,8 +136,9 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
 ❌: Removes the current device from the mappings list.
 Clear All: Removes all devices from the mappings list.
 
-**ini Options:** This tab has some options that will allow you to edit mame.ini easily, separate from the mappings.
 ![ini Options tab](./images/page5.png)
+
+**ini Options:** This tab has some options that will allow you to edit mame.ini easily, separate from the mappings.
 
 **Graphics:**
 
