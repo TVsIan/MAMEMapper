@@ -1,0 +1,66 @@
+{
+  "longname":"Modern Fightstick",
+  "shortname":"stick",
+  "controls": {
+    "BUTTON1": {
+    "internalname":"BUTTON1",
+    "friendlyname":"A"},
+    "BUTTON2": {
+    "internalname":"BUTTON2",
+    "friendlyname":"B"},
+    "BUTTON3": {
+    "internalname":"BUTTON6",
+    "friendlyname":"RB"},
+    "BUTTON4": {
+    "internalname":"BUTTON5",
+    "friendlyname":"LB"},
+    "BUTTON5": {
+    "internalname":"BUTTON3",
+    "friendlyname":"X"},
+    "BUTTON6": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Y"},
+    "BUTTON7": {
+    "internalname":"RZAXIS_POS_SWITCH",
+    "friendlyname":"RT"},
+    "BUTTON8": {
+    "internalname":"RZAXIS_NEG_SWITCH",
+    "friendlyname":"LT"},
+    "BUTTON9": {
+    "internalname":"BUTTON9",
+    "friendlyname":"LSB"},
+    "BUTTON10": {
+    "internalname":"BUTTON10",
+    "friendlyname":"RSB"},
+    "COIN": {
+    "internalname":"BUTTON8",
+    "friendlyname":"View"},
+    "START": {
+    "internalname":"BUTTON7",
+    "friendlyname":"Menu"},
+    "UP": {
+    "internalname":"DPADUP",
+    "friendlyname":"D-Pad Up"},
+    "DOWN": {
+    "internalname":"DPADDOWN",
+    "friendlyname":"D-Pad Down"},
+    "LEFT": {
+    "internalname":"DPADLEFT",
+    "friendlyname":"D-Pad Left"},
+    "RIGHT": {
+    "internalname":"DPADRIGHT",
+    "friendlyname":"D-Pad Right"},
+    "FACEUP": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Y"},
+    "FACEDOWN": {
+    "internalname":"BUTTON1",
+    "friendlyname":"A"},
+    "FACELEFT": {
+    "internalname":"BUTTON3",
+    "friendlyname":"X"},
+    "FACERIGHT": {
+    "internalname":"BUTTON2",
+    "friendlyname":"B"}
+  }
+}

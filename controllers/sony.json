@@ -1,0 +1,93 @@
+{
+  "longname":"Dinput (Sony Style)",
+  "shortname":"sony",
+  "controls": {
+    "BUTTON1": {
+    "internalname":"BUTTON2",
+    "friendlyname":"X"},
+    "BUTTON2": {
+    "internalname":"BUTTON3",
+    "friendlyname":"O"},
+    "BUTTON3": {
+    "internalname":"BUTTON1",
+    "friendlyname":"Square"},
+    "BUTTON4": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Triangle"},
+    "BUTTON5": {
+    "internalname":"BUTTON5",
+    "friendlyname":"L1"},
+    "BUTTON6": {
+    "internalname":"BUTTON6",
+    "friendlyname":"R1"},
+    "BUTTON7": {
+    "internalname":"BUTTON7",
+    "friendlyname":"L2"},
+    "BUTTON8": {
+    "internalname":"BUTTON8",
+    "friendlyname":"R2"},
+    "BUTTON9": {
+    "internalname":"BUTTON11",
+    "friendlyname":"L3"},
+    "BUTTON10": {
+    "internalname":"BUTTON12",
+    "friendlyname":"R3"},
+    "BUTTON11": {
+    "internalname":"BUTTON14",
+    "friendlyname":"Touchpad Click"},
+    "COIN": {
+    "internalname":"BUTTON9",
+    "friendlyname":"Share"},
+    "START": {
+    "internalname":"BUTTON`0",
+    "friendlyname":"Options"},
+    "UP": {
+    "internalname":"HAT1UP",
+    "friendlyname":"D-Pad Up"},
+    "DOWN": {
+    "internalname":"HAT1DOWN",
+    "friendlyname":"D-Pad Down"},
+    "LEFT": {
+    "internalname":"HAT1LEFT",
+    "friendlyname":"D-Pad Left"},
+    "RIGHT": {
+    "internalname":"HAT1RIGHT",
+    "friendlyname":"D-Pad Right"},
+    "JOYSTICKLEFT_UP": {
+    "internalname":"YAXIS_UP_SWITCH",
+    "friendlyname":"Left Stick Y+"},
+    "JOYSTICKLEFT_DOWN": {
+    "internalname":"YAXIS_DOWN_SWITCH",
+    "friendlyname":"Left Stick Y-"},
+    "JOYSTICKLEFT_LEFT": {
+    "internalname":"XAXIS_LEFT_SWITCH",
+    "friendlyname":"Left Stick X-"},
+    "JOYSTICKLEFT_RIGHT": {
+    "internalname":"XAXIS_RIGHT_SWITCH",
+    "friendlyname":"Left Stick X+"},
+    "JOYSTICKRIGHT_UP": {
+    "internalname":"RZAXIS_NEG_SWITCH",
+    "friendlyname":"Right Stick Y+"},
+    "JOYSTICKRIGHT_DOWN": {
+    "internalname":"RZAXIS_POS_SWITCH",
+    "friendlyname":"Right Stick Y-"},
+    "JOYSTICKRIGHT_LEFT": {
+    "internalname":"ZAXIS_NEG_SWITCH",
+    "friendlyname":"Right Stick X-"},
+    "JOYSTICKRIGHT_RIGHT": {
+    "internalname":"ZAXIS_POS_SWITCH",
+    "friendlyname":"Right Stick X+"},
+    "FACEUP": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Triangle"},
+    "FACEDOWN": {
+    "internalname":"BUTTON2",
+    "friendlyname":"X"},
+    "FACELEFT": {
+    "internalname":"BUTTON1",
+    "friendlyname":"Square"},
+    "FACERIGHT": {
+    "internalname":"BUTTON3",
+    "friendlyname":"O"}
+  }
+}

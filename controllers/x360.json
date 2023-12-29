@@ -1,0 +1,90 @@
+{
+  "longname":"Xinput (Xbox Style)",
+  "shortname":"x360",
+  "controls": {
+    "BUTTON1": {
+    "internalname":"BUTTON1",
+    "friendlyname":"A"},
+    "BUTTON2": {
+    "internalname":"BUTTON2",
+    "friendlyname":"B"},
+    "BUTTON3": {
+    "internalname":"BUTTON3",
+    "friendlyname":"X"},
+    "BUTTON4": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Y"},
+    "BUTTON5": {
+    "internalname":"BUTTON5",
+    "friendlyname":"LB"},
+    "BUTTON6": {
+    "internalname":"BUTTON6",
+    "friendlyname":"RB"},
+    "BUTTON7": {
+    "internalname":"RZAXIS_NEG_SWITCH",
+    "friendlyname":"LT"},
+    "BUTTON8": {
+    "internalname":"RZAXIS_POS_SWITCH",
+    "friendlyname":"RT"},
+    "BUTTON9": {
+    "internalname":"BUTTON9",
+    "friendlyname":"LSB"},
+    "BUTTON10": {
+    "internalname":"BUTTON10",
+    "friendlyname":"RSB"},
+    "COIN": {
+    "internalname":"BUTTON8",
+    "friendlyname":"View"},
+    "START": {
+    "internalname":"BUTTON7",
+    "friendlyname":"Menu"},
+    "UP": {
+    "internalname":"DPADUP",
+    "friendlyname":"D-Pad Up"},
+    "DOWN": {
+    "internalname":"DPADDOWN",
+    "friendlyname":"D-Pad Down"},
+    "LEFT": {
+    "internalname":"DPADLEFT",
+    "friendlyname":"D-Pad Left"},
+    "RIGHT": {
+    "internalname":"DPADRIGHT",
+    "friendlyname":"D-Pad Right"},
+    "JOYSTICKLEFT_UP": {
+    "internalname":"YAXIS_UP_SWITCH",
+    "friendlyname":"Left Stick Y+"},
+    "JOYSTICKLEFT_DOWN": {
+    "internalname":"YAXIS_DOWN_SWITCH",
+    "friendlyname":"Left Stick Y-"},
+    "JOYSTICKLEFT_LEFT": {
+    "internalname":"XAXIS_LEFT_SWITCH",
+    "friendlyname":"Left Stick X-"},
+    "JOYSTICKLEFT_RIGHT": {
+    "internalname":"XAXIS_RIGHT_SWITCH",
+    "friendlyname":"Left Stick X+"},
+    "JOYSTICKRIGHT_UP": {
+    "internalname":"RYAXIS_NEG_SWITCH",
+    "friendlyname":"Right Stick Y+"},
+    "JOYSTICKRIGHT_DOWN": {
+    "internalname":"RYAXIS_POS_SWITCH",
+    "friendlyname":"Right Stick Y-"},
+    "JOYSTICKRIGHT_LEFT": {
+    "internalname":"RXAXIS_NEG_SWITCH",
+    "friendlyname":"Right Stick X-"},
+    "JOYSTICKRIGHT_RIGHT": {
+    "internalname":"RXAXIS_POS_SWITCH",
+    "friendlyname":"Right Stick X+"},
+    "FACEUP": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Y"},
+    "FACEDOWN": {
+    "internalname":"BUTTON1",
+    "friendlyname":"A"},
+    "FACELEFT": {
+    "internalname":"BUTTON3",
+    "friendlyname":"X"},
+    "FACERIGHT": {
+    "internalname":"BUTTON2",
+    "friendlyname":"B"}
+  }
+}

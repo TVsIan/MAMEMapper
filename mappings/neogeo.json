@@ -1,0 +1,43 @@
+{
+	"longname":"Neo Geo",
+	"shortname":"neogeo",
+	"x360": {
+		"BUTTON1":"BUTTON3",
+		"BUTTON2":"BUTTON1",
+		"BUTTON3":"BUTTON4",
+		"BUTTON4":"BUTTON2"
+	},
+	"sony": {
+		"BUTTON1":"BUTTON3",
+		"BUTTON2":"BUTTON1",
+		"BUTTON3":"BUTTON4",
+		"BUTTON4":"BUTTON2"
+	},
+	"switch": {
+		"BUTTON1":"BUTTON3",
+		"BUTTON2":"BUTTON1",
+		"BUTTON3":"BUTTON4",
+		"BUTTON4":"BUTTON2"
+	},
+	"arcade6": {
+		"BUTTON2":"BUTTON4",
+		"BUTTON3":"BUTTON5",
+		"BUTTON4":"BUTTON6"
+	},
+	"offset": {
+		"BUTTON1":"BUTTON7",
+		"BUTTON2":"BUTTON1",
+		"BUTTON3":"BUTTON2",
+		"BUTTON4":"BUTTON3"
+	},
+	"m30": {
+		"BUTTON2":"BUTTON4",
+		"BUTTON3":"BUTTON5",
+		"BUTTON4":"BUTTON6"
+	},
+	"retro6": {
+		"BUTTON2":"BUTTON4",
+		"BUTTON3":"BUTTON5",
+		"BUTTON4":"BUTTON6"
+	}
+}

@@ -1,0 +1,60 @@
+{
+  "longname":"6-Button (8Bitdo M30 Xinput)",
+  "shortname":"m30",
+  "controls": {
+    "BUTTON1": {
+    "internalname":"BUTTON1",
+    "friendlyname":"A"},
+    "BUTTON2": {
+    "internalname":"BUTTON2",
+    "friendlyname":"B"},
+    "BUTTON3": {
+    "internalname":"RZAXIS_POS_SWITCH",
+    "friendlyname":"RT"},
+    "BUTTON4": {
+    "internalname":"BUTTON3",
+    "friendlyname":"X"},
+    "BUTTON5": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Y"},
+    "BUTTON6": {
+    "internalname":"BUTTON6",
+    "friendlyname":"RB"},
+    "BUTTON7": {
+    "internalname":"BUTTON5",
+    "friendlyname":"LB"},
+    "BUTTON8": {
+    "internalname":"RZAXIS_NEG_SWITCH",
+    "friendlyname":"LT"},
+    "COIN": {
+    "internalname":"BUTTON8",
+    "friendlyname":"View"},
+    "START": {
+    "internalname":"BUTTON7",
+    "friendlyname":"Menu"},
+    "JOYSTICKLEFT_UP": {
+    "internalname":"YAXIS_UP_SWITCH",
+    "friendlyname":"Left Stick Y+"},
+    "JOYSTICKLEFT_DOWN": {
+    "internalname":"YAXIS_DOWN_SWITCH",
+    "friendlyname":"Left Stick Y-"},
+    "JOYSTICKLEFT_LEFT": {
+    "internalname":"XAXIS_LEFT_SWITCH",
+    "friendlyname":"Left Stick X-"},
+    "JOYSTICKLEFT_RIGHT": {
+    "internalname":"XAXIS_RIGHT_SWITCH",
+    "friendlyname":"Left Stick X+"},
+    "FACEUP": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Y"},
+    "FACEDOWN": {
+    "internalname":"BUTTON1",
+    "friendlyname":"A"},
+    "FACELEFT": {
+    "internalname":"BUTTON3",
+    "friendlyname":"X"},
+    "FACERIGHT": {
+    "internalname":"BUTTON2",
+    "friendlyname":"B"}
+  }
+}

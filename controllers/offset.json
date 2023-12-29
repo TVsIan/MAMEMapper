@@ -1,0 +1,234 @@
+{
+  "longname":"6 Button w/Offset 7th (KB)",
+  "shortname":"offset",
+  "controls": {
+    "P1_UP": {
+    "internalname":"KEYCODE_UP",
+    "friendlyname":"UP"},
+    "P1_DOWN": {
+    "internalname":"KEYCODE_DOWN",
+    "friendlyname":"DOWN"},
+    "P1_LEFT": {
+    "internalname":"KEYCODE_LEFT",
+    "friendlyname":"LEFT"},
+    "P1_RIGHT": {
+    "internalname":"KEYCODE_RIGHT",
+    "friendlyname":"RIGHT"},
+    "P1_BUTTON1": {
+    "internalname":"KEYCODE_LCTRL",
+    "friendlyname":"LCTRL"},
+    "P1_BUTTON2": {
+    "internalname":"KEYCODE_LALT",
+    "friendlyname":"LALT"},
+    "P1_BUTTON3": {
+    "internalname":"KEYCODE_SPACE",
+    "friendlyname":"SPACE"},
+    "P1_BUTTON4": {
+    "internalname":"KEYCODE_LSHIFT",
+    "friendlyname":"LSHIFT"},
+    "P1_BUTTON5": {
+    "internalname":"KEYCODE_Z",
+    "friendlyname":"Z"},
+    "P1_BUTTON6": {
+    "internalname":"KEYCODE_X",
+    "friendlyname":"X"},
+    "P1_BUTTON7": {
+    "internalname":"KEYCODE_C",
+    "friendlyname":"C"},
+    "P1_BUTTON8": {
+    "internalname":"KEYCODE_V",
+    "friendlyname":"V"},
+    "P1_A": {
+    "internalname":"KEYCODE_P",
+    "friendlyname":"P"},
+    "P1_B": {
+    "internalname":"KEYCODE_ENTER",
+    "friendlyname":"ENTER"},
+    "P1_COIN": {
+    "internalname":"KEYCODE_5",
+    "friendlyname":"5"},
+    "P1_START": {
+    "internalname":"KEYCODE_1",
+    "friendlyname":"1"},
+    "P1_FACEUP": {
+    "internalname":"KEYCODE_Z",
+    "friendlyname":"Z"},
+    "P1_FACEDOWN": {
+    "internalname":"KEYCODE_LCTRL",
+    "friendlyname":"LCTRL"},
+    "P1_FACELEFT": {
+    "internalname":"KEYCODE_LSHIFT",
+    "friendlyname":"LSHIFT"},
+    "P1_FACERIGHT": {
+    "internalname":"KEYCODE_LALT",
+    "friendlyname":"LALT"},
+    "P2_UP": {
+    "internalname":"KEYCODE_R",
+    "friendlyname":"R"},
+    "P2_DOWN": {
+    "internalname":"KEYCODE_F",
+    "friendlyname":"F"},
+    "P2_LEFT": {
+    "internalname":"KEYCODE_D",
+    "friendlyname":"D"},
+    "P2_RIGHT": {
+    "internalname":"KEYCODE_G",
+    "friendlyname":"G"},
+    "P2_BUTTON1": {
+    "internalname":"KEYCODE_A",
+    "friendlyname":"A"},
+    "P2_BUTTON2": {
+    "internalname":"KEYCODE_S",
+    "friendlyname":"S"},
+    "P2_BUTTON3": {
+    "internalname":"KEYCODE_Q",
+    "friendlyname":"Q"},
+    "P2_BUTTON4": {
+    "internalname":"KEYCODE_W",
+    "friendlyname":"W"},
+    "P2_BUTTON5": {
+    "internalname":"KEYCODE_I",
+    "friendlyname":"I"},
+    "P2_BUTTON6": {
+    "internalname":"KEYCODE_J",
+    "friendlyname":"J"},
+    "P2_BUTTON7": {
+    "internalname":"KEYCODE_K",
+    "friendlyname":"K"},
+    "P2_BUTTON8": {
+    "internalname":"KEYCODE_L",
+    "friendlyname":"L"},
+    "P2_A": {
+    "internalname":"KEYCODE_TAB",
+    "friendlyname":"TAB"},
+    "P2_B": {
+    "internalname":"KEYCODE_ESC",
+    "friendlyname":"ESC"},
+    "P2_COIN": {
+    "internalname":"KEYCODE_6",
+    "friendlyname":"6"},
+    "P2_START": {
+    "internalname":"KEYCODE_2",
+    "friendlyname":"2"},
+    "P2_FACEUP": {
+    "internalname":"KEYCODE_I",
+    "friendlyname":"I"},
+    "P2_FACEDOWN": {
+    "internalname":"KEYCODE_A",
+    "friendlyname":"A"},
+    "P2_FACELEFT": {
+    "internalname":"KEYCODE_W",
+    "friendlyname":"W"},
+    "P2_FACERIGHT": {
+    "internalname":"KEYCODE_S",
+    "friendlyname":"S"},
+    "P3_UP": {
+    "internalname":"KEYCODE_I",
+    "friendlyname":"I"},
+    "P3_DOWN": {
+    "internalname":"KEYCODE_K",
+    "friendlyname":"K"},
+    "P3_LEFT": {
+    "internalname":"KEYCODE_J",
+    "friendlyname":"J"},
+    "P3_RIGHT": {
+    "internalname":"KEYCODE_L",
+    "friendlyname":"L"},
+    "P3_BUTTON1": {
+    "internalname":"KEYCODE_RCTRL",
+    "friendlyname":"RCTRL"},
+    "P3_BUTTON2": {
+    "internalname":"KEYCODE_RSHIFT",
+    "friendlyname":"RSHIFT"},
+    "P3_BUTTON3": {
+    "internalname":"KEYCODE_ENTER",
+    "friendlyname":"ENTER"},
+    "P3_BUTTON4": {
+    "internalname":"KEYCODE_O",
+    "friendlyname":"O"},
+    "P3_BUTTON5": {
+    "internalname":"KEYCODE_F5",
+    "friendlyname":"F5"},
+    "P3_BUTTON6": {
+    "internalname":"KEYCODE_F6",
+    "friendlyname":"F6"},
+    "P3_BUTTON7": {
+    "internalname":"KEYCODE_F7",
+    "friendlyname":"F7"},
+    "P3_BUTTON8": {
+    "internalname":"KEYCODE_F8",
+    "friendlyname":"F8"},
+    "P3_COIN": {
+    "internalname":"KEYCODE_7",
+    "friendlyname":"7"},
+    "P3_START": {
+    "internalname":"KEYCODE_3",
+    "friendlyname":"3"},
+    "P3_FACEUP": {
+    "internalname":"KEYCODE_F5",
+    "friendlyname":"F5"},
+    "P3_FACEDOWN": {
+    "internalname":"KEYCODE_RCTRL",
+    "friendlyname":"RCTRL"},
+    "P3_FACELEFT": {
+    "internalname":"KEYCODE_O",
+    "friendlyname":"O"},
+    "P3_FACERIGHT": {
+    "internalname":"KEYCODE_RSHIFT",
+    "friendlyname":"RSHIFT"},
+    "P4_UP": {
+    "internalname":"KEYCODE_Y",
+    "friendlyname":"Y"},
+    "P4_DOWN": {
+    "internalname":"KEYCODE_N",
+    "friendlyname":"N"},
+    "P4_LEFT": {
+    "internalname":"KEYCODE_V",
+    "friendlyname":"V"},
+    "P4_RIGHT": {
+    "internalname":"KEYCODE_U",
+    "friendlyname":"U"},
+    "P4_BUTTON1": {
+    "internalname":"KEYCODE_B",
+    "friendlyname":"B"},
+    "P4_BUTTON2": {
+    "internalname":"KEYCODE_E",
+    "friendlyname":"E"},
+    "P4_BUTTON3": {
+    "internalname":"KEYCODE_H",
+    "friendlyname":"H"},
+    "P4_BUTTON4": {
+    "internalname":"KEYCODE_M",
+    "friendlyname":"M"},
+    "P4_BUTTON5": {
+    "internalname":"KEYCODE_F9",
+    "friendlyname":"F9"},
+    "P4_BUTTON6": {
+    "internalname":"KEYCODE_F10",
+    "friendlyname":"F10"},
+    "P4_BUTTON7": {
+    "internalname":"KEYCODE_F11",
+    "friendlyname":"F11"},
+    "P4_BUTTON8": {
+    "internalname":"KEYCODE_F12",
+    "friendlyname":"F12"},
+    "P4_COIN": {
+    "internalname":"KEYCODE_8",
+    "friendlyname":"8"},
+    "P4_START": {
+    "internalname":"KEYCODE_4",
+    "friendlyname":"4"},
+    "P4_FACEUP": {
+    "internalname":"KEYCODE_F9",
+    "friendlyname":"F9"},
+    "P4_FACEDOWN": {
+    "internalname":"KEYCODE_B",
+    "friendlyname":"B"},
+    "P4_FACELEFT": {
+    "internalname":"KEYCODE_M",
+    "friendlyname":"M"},
+    "P4_FACERIGHT": {
+    "internalname":"KEYCODE_E",
+    "friendlyname":"E"}
+  }
+}

@@ -1,0 +1,19 @@
+{
+	"longname":"Defaults",
+	"shortname":"default",
+	"x360-SNES": {
+		"BUTTON1":"BUTTON3",
+		"BUTTON2":"BUTTON1",
+		"BUTTON3":"BUTTON2"
+	},
+	"sony-SNES": {
+		"BUTTON1":"BUTTON3",
+		"BUTTON2":"BUTTON1",
+		"BUTTON3":"BUTTON2"
+	},
+		"switch-SNES": {
+		"BUTTON1":"BUTTON3",
+		"BUTTON2":"BUTTON1",
+		"BUTTON3":"BUTTON2"
+	}
+}

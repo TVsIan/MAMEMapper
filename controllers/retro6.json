@@ -1,0 +1,54 @@
+{
+  "longname":"6-Button (Retroarch Genesis/Megadrive)",
+  "shortname":"retro6",
+  "controls": {
+    "BUTTON1": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Y"},
+    "BUTTON2": {
+    "internalname":"BUTTON1",
+    "friendlyname":"A"},
+    "BUTTON3": {
+    "internalname":"BUTTON2",
+    "friendlyname":"B"},
+    "BUTTON4": {
+    "internalname":"BUTTON5",
+    "friendlyname":"LB"},
+    "BUTTON5": {
+    "internalname":"BUTTON3",
+    "friendlyname":"X"},
+    "BUTTON6": {
+    "internalname":"BUTTON6",
+    "friendlyname":"RB"},
+    "COIN": {
+    "internalname":"BUTTON8",
+    "friendlyname":"View"},
+    "START": {
+    "internalname":"BUTTON7",
+    "friendlyname":"Menu"},
+    "UP": {
+    "internalname":"DPADUP",
+    "friendlyname":"D-Pad Up"},
+    "DOWN": {
+    "internalname":"DPADDOWN",
+    "friendlyname":"D-Pad Down"},
+    "LEFT": {
+    "internalname":"DPADLEFT",
+    "friendlyname":"D-Pad Left"},
+    "RIGHT": {
+    "internalname":"DPADRIGHT",
+    "friendlyname":"D-Pad Right"},
+    "FACEUP": {
+    "internalname":"BUTTON3",
+    "friendlyname":"X"},
+    "FACEDOWN": {
+    "internalname":"BUTTON4",
+    "friendlyname":"Y"},
+    "FACELEFT": {
+    "internalname":"BUTTON5",
+    "friendlyname":"LB"},
+    "FACERIGHT": {
+    "internalname":"BUTTON3",
+    "friendlyname":"X"}
+  }
+}
