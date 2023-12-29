@@ -17,6 +17,7 @@ from PyQt6.QtCore import Qt, QObject, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
 	QApplication, QMainWindow, QDialog, QMessageBox, QTabWidget, QComboBox, QListWidget, QListWidgetItem, QPushButton,
 	QProgressDialog, QLabel, QFileDialog, QGroupBox, QRadioButton, QCheckBox, QLineEdit, QTreeWidget, QWidget, QLineEdit,
+	QSpinBox
 )
 from PyQt6.uic import loadUi
 
@@ -143,6 +144,10 @@ class mainWindow(QMainWindow):
 		self.svgChainsCombo.addItems(bgfxChains)
 		self.mixedScreensCheck.setChecked(mixedScreens)
 
+		if platform.system() != 'Windows':
+			hlslCheck.setEnabled(False)
+			hlslCheck.setChecked(False)
+
 	def connectSignalsSlots(self):
 		self.pCheck = []
 		self.layoutRadio = []
@@ -242,7 +247,7 @@ class mainWindow(QMainWindow):
 		self.addJoyButton.clicked.connect(self.addJoystick)
 		self.addGunButton = self.findChild(QPushButton, 'addGunButton')
 		self.addGunButton.clicked.connect(self.addLightgun)
-		# As far as I can tell, MAME does not support multiple keyboard devices. 
+		# As far as I can tell, MAME does not support multiple keyboard devices.
 		# Functionality exists but is commented out, can be re-enabled if needed. Button will be set to invisible and not linked to any functions.
 		self.addKBButton = self.findChild(QPushButton, 'addKBButton')
 		self.addKBButton.setVisible(False)
@@ -263,13 +268,20 @@ class mainWindow(QMainWindow):
 		self.cropArtCheck = self.findChild(QCheckBox, 'cropArtCheck')
 		self.autosaveCheck = self.findChild(QCheckBox, 'autosaveCheck')
 		self.rewindCheck = self.findChild(QCheckBox, 'rewindCheck')
-		self.rewindLine = self.findChild(QLineEdit, 'rewindLine')
+		self.rewindBox = self.findChild(QSpinBox, 'rewindBox')
 		self.applyButton = self.findChild(QPushButton, 'applyButton')
 		self.applyButton.clicked.connect(self.writeINIFile)
 		self.iniLoadButton = self.findChild(QPushButton, 'iniLoadButton')
 		self.iniLoadButton.clicked.connect(self.loadINIFile)
 		self.mixedScreensCheck = self.findChild(QCheckBox, 'mixedScreensCheck')
 		self.mixedScreensCheck.toggled.connect(self.mixedScreensToggle)
+		self.hlslCheck = self.findChild(QCheckBox, 'hlslCheck')
+		self.horizontalEdit = self.findChild(QLineEdit, 'horizontalEdit')
+		self.verticalEdit = self.findChild(QLineEdit, 'verticalEdit')
+		self.horizontalButton = self.findChild(QPushButton, 'horizontalButton')
+		self.horizontalButton.clicked.connect(self.browseHorizontal)
+		self.verticalButton = self.findChild(QPushButton, 'verticalButton')
+		self.verticalButton.clicked.connect(self.browseVertical)
 
 	def closeApp(self, s):
 		# Exit Function
@@ -391,7 +403,7 @@ class mainWindow(QMainWindow):
 
 		# Set preview image if it exists, uses short name, allows an override by long name for custom.
 		controllerPreview = f'{scriptDir}{os.path.sep}controllers{os.path.sep}{controllerTypes[selectedController]}.png'
-		customControllerPreview = f'{scriptDir}{os.path.sep}controllers{os.path.sep}{selectedController}.png'		
+		customControllerPreview = f'{scriptDir}{os.path.sep}controllers{os.path.sep}{selectedController}.png'
 		if os.path.isfile(customControllerPreview):
 			controllerImage = QPixmap(customControllerPreview)
 			self.controllerPic.setPixmap(controllerImage)
@@ -969,6 +981,32 @@ class mainWindow(QMainWindow):
 		fixedDevices = { 'joystick': {}, 'lightgun': {}, 'keyboard': {}, 'mouse': {} }
 		self.fixedList.clear()
 
+	def browseHorizontal(self, s):
+		if len(mameDir) == 0:
+			loadPath = scriptDir
+		else:
+			loadPath = f'{mameDir}{os.path.sep}artwork'
+		fileName = QFileDialog.getOpenFileName(
+			self,
+			"Select an artwork file",
+			loadPath,
+			"Artwork File (*.zip *.7z *.lay)"
+		)
+		self.horizontalEdit.setText(os.path.basename(fileName[0]).rsplit('.',1)[0])
+
+	def browseVertical(self, s):
+		if len(mameDir) == 0:
+			loadPath = scriptDir
+		else:
+			loadPath = f'{mameDir}{os.path.sep}artwork'
+		fileName = QFileDialog.getOpenFileName(
+			self,
+			"Select an artwork file",
+			loadPath,
+			"Artwork File (*.zip *.7z *.lay)"
+		)
+		self.verticalEdit.setText(os.path.basename(fileName[0]).rsplit('.',1)[0])
+
 	def writeINIFile(self, s):
 		foundVideo = False
 		foundBackend = False
@@ -980,124 +1018,279 @@ class mainWindow(QMainWindow):
 		foundAutosave = False
 		foundRewind = False
 		foundRewindCapacity = False
+		foundHorizontal = False
+		foundVertical = False
+		foundHLSL = False
+		foundFilter = False
+		hlslLines = {'beam_width_min':'1.00','beam_width_max':'4.00','beam_intensity_weight':'0.75','flicker':'0.15','hlsl_oversampling':'0','shadow_mask_tile_mode':'0','shadow_mask_alpha':'0.5',
+					'shadow_mask_texture':'shadow-mask.png','shadow_mask_x_count':'12','shadow_mask_y_count':'6','shadow_mask_usize':'0.5','shadow_mask_vsize':'0.5','shadow_mask_uoffset':'0.0',
+					'shadow_mask_voffset':'0.0','distortion':'0.0','cubic_distortion':'0.0','distort_corner':'0.0','round_corner':'0.0','smooth_border':'0.0','reflection':'0.0','vignetting':'0.0',
+					'scanline_alpha':'0.0','defocus':'0.0,0.0','converge_x':'0.0,0.0,0.0','converge_y':'0.0,0.0,0.0','radial_converge_x':'0.0,0.0,0.0','radial_converge_y':'0.0,0.0,0.0',
+					'red_ratio':'1.0,0.0,0.0','grn_ratio':'0.0,1.0,0.0','blu_ratio':'0.0,0.0,1.0','saturation':'1.0','offset':'0.0,0.0,0.0','scale':'1.0,1.0,1.0','power':'1.0,1.0,1.0',
+					'floor':'0.0,0.0,0.0','phosphor_life':'0.5,0.5,0.5','chroma_mode':'3','chroma_a':'0.630,0.340','chroma_b':'0.310,0.595','chroma_c':'0.155,0.070',
+					'chroma_y_gain':'0.2124,0.7011,0.0866','yiq_enable':'0','vector_beam_smooth':'0.0','vector_length_scale':'0.5','vector_length_ratio':'0.5','bloom_blend_mode':'0',
+					'bloom_scale':'0.75','bloom_overdrive':'1.00,1.00,1.00','bloom_lvl0_weight':'1.00','bloom_lvl1_weight':'0.48','bloom_lvl2_weight':'0.32','bloom_lvl3_weight':'0.24',
+					'bloom_lvl4_weight':'0.16','bloom_lvl5_weight':'0.24','bloom_lvl6_weight':'0.32','bloom_lvl7_weight':'0.48','bloom_lvl8_weight':'0.64'}
+		foundHLSLConfig = {}
+		for iniPrefix in hlslLines.keys():
+			foundHLSLConfig[iniPrefix] = False
+
+		if len(mameDir) == 0:
+			showMessage('MAME Not Found','Please set your MAME path.',Qt.Icon.Critical)
+			return
 
 		# BGFX Chains will be set for up to 4 windows on one monitor for CRTs, 1 each for LCD & SVG.
 		# MAME does not process an svg.ini (it uses the default), so we write CRT settings to crt.ini and svg settings to mame.ini
+		# To save a file, horizontal default goes in mame.ini, vertical in vertical.ini.
 
 		debugText('Saving settings to mame.ini')
 		iniFile = f'{mameDir}{os.path.sep}mame.ini'
 		if os.path.isfile(iniFile):
-			with fileinput.FileInput(iniFile, inplace = True, backup ='.bak') as currentINI:
-				for iniLine in currentINI:
-					if iniLine.startswith('video '):
-						debugText('video line found in mame.ini')
-						print(f'video                     {self.videoCombo.currentText()}',end ='\n')
-						foundVideo = True
-					elif iniLine.startswith('bgfx_backend '):
-						debugText('bgfx backend line found in mame.ini')
-						print(f'bgfx_backend              {self.bgfxCombo.currentText()}',end ='\n')
-						foundBackend = True
-					elif iniLine.startswith('bgfx_screen_chains '):
-						debugText('bgfx screen chains line found in mame.ini')
-						print(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}',end ='\n')
-						foundChains = True
-					elif iniLine.startswith('triplebuffer '):
-						debugText('triplebuffer line found in mame.ini')
-						print(f'triplebuffer              {int(self.tripleBufferCheck.isChecked() == True)}',end ='\n')
-						foundTriple = True
-					elif iniLine.startswith('window '):
-						debugText('window line found in mame.ini')
-						print(f'window                    {int(self.fullScreenCheck.isChecked() == False)}',end ='\n')
-						foundFullscreen = True
-					elif iniLine.startswith('artwork_crop '):
-						debugText('artwork crop found in mame.ini')
-						print(f'artwork_crop              {int(self.cropArtCheck.isChecked() == True)}',end ='\n')
-						foundCrop = True
-					elif iniLine.startswith('autosave '):
-						debugText('autosave found in mame.ini')
-						print(f'autosave                  {int(self.autosaveCheck.isChecked() == True)}',end ='\n')
-						foundAutosave = True
-					elif iniLine.startswith('rewind '):
-						debugText('rewind found in mame.ini')
-						print(f'rewind                    {int(self.rewindCheck.isChecked() == True)}',end ='\n')
-						foundRewind = True
-					elif iniLine.startswith('rewind_capacity '):
-						debugText('rewind capacity found in mame.ini')
-						print(f'rewind_capacity           {int(self.rewindLine.text())}',end ='\n')
-						foundRewindCapacity = True
-					else:
-						print(iniLine, end ='')
-			with open(iniFile, 'a') as mameINI:
-				if not foundVideo:
-					mameINI.write(f'video                     {self.videoCombo.currentText()}')
-				if not foundBackend:
-					mameINI.write(f'bgfx_backend              {self.bgfxCombo.currentText()}')
-				if not foundChains:
-					mameINI.write(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}')
-				if not foundTriple:
-					mameINI.write(f'triplebuffer              {int(self.tripleBufferCheck.isChecked() == True)}')
-				if not foundFullscreen:
-					mameINI.write(f'window                    {int(self.fullScreenCheck.isChecked() == False)}')
-				if not foundCrop:
-					mameINI.write(f'artwork_crop              {int(self.cropArtCheck.isChecked() == True)}')
-				if not foundAutosave:
-					mameINI.write(f'autosave                  {int(self.autosaveCheck.isChecked() == True)}')
-				if not foundRewind:
-					mameINI.write(f'rewind                    {int(self.rewindCheck.isChecked() == True)}')
-				if not foundRewindCapacity:
-					mameINI.write(f'rewind_capacity           {int(self.rewindLine.text())}')
+			with open(iniFile, 'r') as mameINI:
+				currentINI = mameINI.readlines()
+				mameINI.close()
+
+			newINI = []
+			for iniLine in currentINI:
+				if iniLine.startswith('video '):
+					debugText('video line found in mame.ini')
+					newINI.append(f'video                     {self.videoCombo.currentText()}\n')
+					foundVideo = True
+				elif iniLine.startswith('bgfx_backend '):
+					debugText('bgfx backend line found in mame.ini')
+					newINI.append(f'bgfx_backend              {self.bgfxCombo.currentText()}\n')
+					foundBackend = True
+				elif iniLine.startswith('bgfx_screen_chains '):
+					debugText('bgfx screen chains line found in mame.ini')
+					newINI.append(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}\n')
+					foundChains = True
+				elif iniLine.startswith('triplebuffer '):
+					debugText('triplebuffer line found in mame.ini')
+					newINI.append(f'triplebuffer              {int(self.tripleBufferCheck.isChecked() == True)}\n')
+					foundTriple = True
+				elif iniLine.startswith('window '):
+					debugText('window line found in mame.ini')
+					newINI.append(f'window                    {int(self.fullScreenCheck.isChecked() == False)}\n')
+					foundFullscreen = True
+				elif iniLine.startswith('artwork_crop '):
+					debugText('artwork crop found in mame.ini')
+					newINI.append(f'artwork_crop              {int(self.cropArtCheck.isChecked() == True)}\n')
+					foundCrop = True
+				elif iniLine.startswith('autosave '):
+					debugText('autosave found in mame.ini')
+					newINI.append(f'autosave                  {int(self.autosaveCheck.isChecked() == True)}\n')
+					foundAutosave = True
+				elif iniLine.startswith('rewind '):
+					debugText('rewind found in mame.ini')
+					newINI.append(f'rewind                    {int(self.rewindCheck.isChecked() == True)}\n')
+					foundRewind = True
+				elif iniLine.startswith('rewind_capacity '):
+					debugText('rewind capacity found in mame.ini')
+					newINI.append(f'rewind_capacity           {int(self.rewindBox.value())}\n')
+					foundRewindCapacity = True
+				elif iniLine.startswith('fallback_artwork '):
+					debugText('fallback_artwork found in mame.ini')
+					newINI.append(f'fallback_artwork          {self.horizontalEdit.text()}\n')
+					foundHorizontal = True
+				else:
+					newINI.append(iniLine)
+			if not foundVideo:
+				newINI.append(f'video                     {self.videoCombo.currentText()}\n')
+			if not foundBackend:
+				newINI.append(f'bgfx_backend              {self.bgfxCombo.currentText()}\n')
+			if not foundChains:
+				newINI.append(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}\n')
+			if not foundTriple:
+				newINI.append(f'triplebuffer              {int(self.tripleBufferCheck.isChecked() == True)}\n')
+			if not foundFullscreen:
+				newINI.append(f'window                    {int(self.fullScreenCheck.isChecked() == False)}\n')
+			if not foundCrop:
+				newINI.append(f'artwork_crop              {int(self.cropArtCheck.isChecked() == True)}\n')
+			if not foundAutosave:
+				newINI.append(f'autosave                  {int(self.autosaveCheck.isChecked() == True)}\n')
+			if not foundRewind:
+				newINI.append(f'rewind                    {int(self.rewindCheck.isChecked() == True)}\n')
+			if not foundRewindCapacity:
+				newINI.append(f'rewind_capacity           {int(self.rewindBox.value())}\n')
+			if not foundHorizontal:
+				newINI.append(f'fallback_artwork          {self.horizontalEdit.text()}\n')
+			with open(iniFile, 'w') as mameINI:
+				debugText(f'Writing {iniFile}')
+				mameINI.writelines(newINI)
 				mameINI.close()
 		else:
+			newINI = []
+			newINI.append(f'video                     {self.videoCombo.currentText()}\n')
+			newINI.append(f'bgfx_backend              {self.bgfxCombo.currentText()}\n')
+			newINI.append(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}\n')
+			newINI.append(f'triplebuffer              {int(self.tripleBufferCheck.isChecked() == True)}\n')
+			newINI.append(f'window                    {int(self.fullScreenCheck.isChecked() == False)}\n')
+			newINI.append(f'artwork_crop              {int(self.cropArtCheck.isChecked() == True)}\n')
+			newINI.append(f'autosave                  {int(self.autosaveCheck.isChecked() == True)}\n')
+			newINI.append(f'rewind                    {int(self.rewindCheck.isChecked() == True)}\n')
+			newINI.append(f'rewind_capacity           {int(self.rewindBox.value())}\n')
+			newINI.append(f'fallback_artwork          {self.horizontalEdit.text()}\n')
 			with open(iniFile, 'w') as mameINI:
-				newINI = []
-				newINI.append(f'video                     {self.videoCombo.currentText()}')
-				newINI.append(f'bgfx_backend              {self.bgfxCombo.currentText()}')
-				newINI.append(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}')
-				newINI.append(f'triplebuffer              {int(self.tripleBufferCheck.isChecked() == True)}')
-				newINI.append(f'window                    {int(self.fullScreenCheck.isChecked() == False)}')
-				newINI.append(f'artwork_crop              {int(self.cropArtCheck.isChecked() == True)}')
-				newINI.append(f'autosave                  {int(self.autosaveCheck.isChecked() == True)}')
-				newINI.append(f'rewind                    {int(self.rewindCheck.isChecked() == True)}')
-				newINI.append(f'rewind_capacity           {int(self.rewindLine.text())}')
+				debugText(f'Writing {iniFile}')
 				mameINI.writelines(newINI)
+				mameINI.close()
+
+		iniFile = f'{mameDir}{os.path.sep}vertical.ini'
+		foundVertical = False
+		if os.path.isfile(iniFile):
+			with open(iniFile, 'r') as mameINI:
+				currentINI = mameINI.readlines()
+				mameINI.close()
+
+			newINI = []
+			for iniLine in currentINI:
+				if iniLine.startswith('fallback_artwork '):					
+					debugText('fallback artwork line found in vertical.ini')
+					newINI.append(f'fallback_artwork         {self.verticalEdit.text()}\n')
+					foundVertical = True
+				else:
+					newINI.append(iniLine)
+			if not foundVertical:
+				newINI.append(f'fallback_artwork         {self.verticalEdit.text()}\n')
+			with open(iniFile, 'w') as mameINI:
+				debugText(f'Writing {iniFile}')
+				mameINI.writelines(newINI)
+				mameINI.close()
+		elif len(self.verticalEdit.text()) > 0:
+			with open(iniFile, 'w') as mameINI:
+				debugText(f'Writing {iniFile}')
+				mameINI.write(f'fallback_artwork         {self.verticalEdit.text()}\n')
 				mameINI.close()
 
 		iniFile = f'{mameDir}{os.path.sep}lcd.ini'
 		foundChains = False
 		if os.path.isfile(iniFile):
-			with fileinput.FileInput(iniFile, inplace = True, backup ='.bak') as currentINI:
-				for iniLine in currentINI:
-					if iniLine.startswith('video '):
-						if iniLine.startswith('bgfx_screen_chains '):
-							debugText('bgfx screen chains line found in lcd.ini')
-							print(f'bgfx_screen_chains        {self.lcdChainsCombo.currentText()}',end ='\n')
-							foundChains = True
+			with open(iniFile, 'r') as mameINI:
+				currentINI = mameINI.readlines()
+				mameINI.close()
+
+			newINI = []
+			for iniLine in currentINI:
+				if iniLine.startswith('bgfx_screen_chains '):
+					debugText('bgfx screen chains line found in lcd.ini')
+					newINI.append(f'bgfx_screen_chains        {self.lcdChainsCombo.currentText()}\n')
+					foundChains = True
+				else:
+					newINI.append(iniLine)
 			if not foundChains:
-				with open(iniFile, 'w') as mameINI:
-					mameINI.write(f'bgfx_screen_chains        {self.lcdChainsCombo.currentText()}\n')
-					mameINI.close()
+				newINI.append(f'bgfx_screen_chains        {self.lcdChainsCombo.currentText()}\n')
+			with open(iniFile, 'w') as mameINI:
+				debugText(f'Writing {iniFile}')
+				mameINI.writelines(newINI)
+				mameINI.close()
 		else:
 			with open(iniFile, 'w') as mameINI:
+				debugText(f'Writing {iniFile}')
 				mameINI.write(f'bgfx_screen_chains        {self.lcdChainsCombo.currentText()}\n')
+				mameINI.close()
 
-		iniFile = f'{mameDir}{os.path.sep}crt.ini'
+		iniFile = f'{mameDir}{os.path.sep}raster.ini'
 		foundChains = False
 		if os.path.isfile(iniFile):
-			with fileinput.FileInput(iniFile, inplace = True, backup ='.bak') as currentINI:
-				for iniLine in currentINI:
-					if iniLine.startswith('video '):
-						if iniLine.startswith('bgfx_screen_chains '):
-							debugText('bgfx screen chains line found in svg.ini')
-							print(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}',end ='\n')
-							foundChains = True
+			with open(iniFile, 'r') as mameINI:
+				currentINI = mameINI.readlines()
+				mameINI.close()
+
+			newINI = []
+			for iniLine in currentINI:
+				if iniLine.startswith('bgfx_screen_chains '):
+					debugText('bgfx screen chains line found in raster.ini')
+					newINI.append(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}\n')
+					foundChains = True
+				else:
+					newINI.append(iniLine)
 			if not foundChains:
-				with open(iniFile, 'w') as mameINI:
-					mameINI.write(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}\n')
-					mameINI.close()
+				newINI.append(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}\n')
+			with open(iniFile, 'w') as mameINI:
+				debugText(f'Writing {iniFile}')
+				mameINI.writelines(newINI)
+				mameINI.close()
 		else:
 			with open(iniFile, 'w') as mameINI:
+				debugText(f'Writing {iniFile}')
 				mameINI.write(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}\n')
 				mameINI.close()
+
+		iniFile = f'{mameDir}{os.path.sep}vector.ini'
+		foundVideo = False
+		foundChains = False
+		if os.path.isfile(iniFile):
+			with open(iniFile, 'r') as mameINI:
+				currentINI = mameINI.readlines()
+				mameINI.close()
+
+			newINI = []
+			for iniLine in currentINI:
+				if iniLine.startswith('video '):
+					debugText('video line found in vector.ini')
+					# Change video to d3d if BGFX is enabled
+					if self.hlslCheck.isChecked() and self.videoCombo.currentText() not in ['bgfx', 'd3d']:
+						newINI.append(f'video                     d3d\n')
+					foundVideo = True
+				if iniLine.startswith('bgfx_screen_chains '):
+					debugText('bgfx screen chains line found in raster.ini')
+					if self.hlslCheck.isChecked() and self.videoCombo.currentText() == 'bgfx':
+						newINI.append(f'bgfx_screen_chains        hlsl\n')
+					foundChains = True
+				if iniLine.startswith('hlsl_enable '):
+					debugText('hlsl line found in vector.ini')
+					if self.hlslCheck.isChecked() and self.videoCombo.currentText() != 'bgfx':
+						newINI.append(f'hlsl_enable               1\n')
+					else:
+						newINI.append(f'hlsl_enable               0\n')
+					foundHLSL = True
+				if iniLine.startswith('filter '):
+					debugText('filter found in vector.ini')
+					if self.hlslCheck.isChecked():
+						newINI.append(f'filter                    0\n')
+					foundFilter = True
+				if self.hlslCheck.isChecked():
+					lineText = iniLine.split(' ',1)[0]
+					if lineText in hlslLines.keys():
+						# Don't change, just know it's there. We don't want to overwrite user's settings.
+						foundHLSLConfig[lineText] = True
+				else:
+					newINI.append(iniLine)
+			if not foundHLSL:
+				if self.hlslCheck.isChecked() and self.videoCombo.currentText() != 'bgfx':
+					newINI.append(f'hlsl_enable               1\n')
+				else:
+					newINI.append(f'hlsl_enable               0\n')
+			if not foundVideo:
+				if self.hlslCheck.isChecked() and self.videoCombo.currentText() not in ['bgfx', 'd3d']:
+					newINI.append(f'video                     d3d\n')
+			if not foundFilter and self.hlslCheck.isChecked():
+					newINI.append(f'filter                    0\n')
+			if self.hlslCheck.isChecked():
+				# Do add any settings that are missing, however.
+				for configItem in foundHLSLConfig.keys():
+					if not foundHLSLConfig[configItem]:
+						newINI.append(f"{configItem}{' ' * (26 - len(configItem))}{hlslLines[configItem]}\n")
+			with open(iniFile, 'w') as mameINI:
+				debugText(f'Writing {iniFile}')
+				mameINI.writelines(newINI)
+				mameINI.close()
+		else:
+			newINI = []
+			if self.hlslCheck.isChecked():
+				if self.videoCombo.currentText() == 'bgfx':
+					newINI.append(f'bgfx_screen_chains        hlsl\n')
+					newINI.append(f'hlsl_enable               0\n')
+				else:
+					newINI.append(f'video                     d3d\n')
+					newINI.append(f'hlsl_enable               1\n')
+				newINI.append(f'filter                    0\n')
+				for configItem in foundHLSLConfig.keys():
+					newINI.append(f"{configItem}{' ' * (26 - len(configItem))}{hlslLines[configItem]}\n")
+				with open(iniFile, 'w') as mameINI:
+					debugText(f'Writing {iniFile}')
+					mameINI.writelines(newINI)
+					mameINI.close()
 
 		if mixedScreens == 1:
 			# CRT main screen, LCD subdisplay
@@ -1107,19 +1300,28 @@ class mainWindow(QMainWindow):
 				iniFile = f'{mameDir}{os.path.sep}{mixed}.ini'
 				foundChains = False
 				if os.path.isfile(iniFile):
-					with fileinput.FileInput(iniFile, inplace = True, backup ='.bak') as currentINI:
-						for iniLine in currentINI:
-							if iniLine.startswith('video '):
-								if iniLine.startswith('bgfx_screen_chains '):
-									debugText(f'bgfx screen chains line found in {mixed}.ini')
-									print(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()}',end ='\n')
-									foundChains = True
+					with open(iniFile, 'r') as mameINI:
+						currentINI = mameINI.readlines()
+						mameINI.close()
+
+					newINI = []
+					for iniLine in currentINI:
+						if iniLine.startswith('bgfx_screen_chains '):
+							if iniLine.startswith('bgfx_screen_chains '):
+								debugText(f'bgfx screen chains line found in {mixed}.ini')
+								newINI.append(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()}\n')
+								foundChains = True
+							else:
+								newINI.append(iniLine)
 					if not foundChains:
-						with open(iniFile, 'w') as mameINI:
-							mameINI.write(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()}\n')
-							mameINI.close()
+						newINI.append(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()}\n')
+					with open(iniFile, 'w') as mameINI:
+						debugText(f'Writing {iniFile}')
+						mameINI.writelines(newINI)
+						mameINI.close()
 				else:
 					with open(iniFile, 'w') as mameINI:
+						debugText(f'Writing {iniFile}')
 						mameINI.write(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()}\n')
 						mameINI.close()
 
@@ -1131,26 +1333,40 @@ class mainWindow(QMainWindow):
 				iniFile = f'{mameDir}{os.path.sep}{mixed}.ini'
 				foundChains = False
 				if os.path.isfile(iniFile):
-					with fileinput.FileInput(iniFile, inplace = True, backup ='.bak') as currentINI:
-						for iniLine in currentINI:
-							if iniLine.startswith('video '):
-								if iniLine.startswith('bgfx_screen_chains '):
-									debugText(f'bgfx screen chains line found in {mixed}.ini')
-									print(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()},{self.lcdChainsCombo.currentText()}',end ='\n')
-									foundChains = True
+					with open(iniFile, 'r') as mameINI:
+						currentINI = mameINI.readlines()
+						mameINI.close()
+
+					newINI = []
+					for iniLine in currentINI:
+						if iniLine.startswith('bgfx_screen_chains '):
+							if iniLine.startswith('bgfx_screen_chains '):
+								debugText(f'bgfx screen chains line found in {mixed}.ini')
+								newINI.append(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()},{self.lcdChainsCombo.currentText()}\n')
+								foundChains = True
+							else:
+								newINI.append(iniLine)
 					if not foundChains:
-						with open(iniFile, 'w') as mameINI:
-							mameINI.write(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()},{self.lcdChainsCombo.currentText()}\n')
-							mameINI.close()
+						newINI.append(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()},{self.lcdChainsCombo.currentText()}\n')
+					with open(iniFile, 'w') as mameINI:
+						debugText(f'Writing {iniFile}')
+						mameINI.writelines(newINI)
+						mameINI.close()
 				else:
 					with open(iniFile, 'w') as mameINI:
+						debugText(f'Writing {iniFile}')
 						mameINI.write(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.lcdChainsCombo.currentText()},{self.lcdChainsCombo.currentText()}\n')
 						mameINI.close()
 
 		showMessage('Done!','Added settings to ini files.')
 
 	def loadINIFile(self, s):
+		if len(mameDir) == 0:
+			showMessage('MAME Not Found','Please set your MAME path.',Qt.Icon.Critical)
+			return
 		debugText('Loading settings from mame.ini')
+		self.horizontalEdit.setText('')
+		self.verticalEdit.setText('')
 		iniFile = f'{mameDir}{os.path.sep}mame.ini'
 		if os.path.isfile(iniFile):
 			mameINI = open(iniFile, 'r')
@@ -1196,7 +1412,19 @@ class mainWindow(QMainWindow):
 					else:
 						self.rewindCheck.setChecked(True)
 				elif iniLine.startswith('rewind_capacity '):
-					self.rewindLine.setText(str(int(iniLine[16:])))
+					self.rewindBox.setValue(int(iniLine[16:]))
+				elif iniLine.startswith('fallback_artwork '):
+					self.horizontalEdit.setText(iniLine[16:].strip())
+
+		debugText('Loading settings from vertical.ini')
+		iniFile = f'{mameDir}{os.path.sep}vertical.ini'
+		if os.path.isfile(iniFile):
+			mameINI = open(iniFile, 'r')
+			currentINI = mameINI.readlines()
+			mameINI.close()
+			for iniLine in currentINI:
+				if iniLine.startswith('fallback_artwork '):
+					self.verticalEdit.setText(iniLine[16:].strip())
 
 		debugText('Loading settings from lcd.ini')
 		iniFile = f'{mameDir}{os.path.sep}lcd.ini'
@@ -1210,18 +1438,32 @@ class mainWindow(QMainWindow):
 						if f'{self.lcdChainsCombo.itemText(item)}\n' in iniLine or iniLine.endswith(self.lcdChainsCombo.itemText(item)):
 							self.lcdChainsCombo.setCurrentIndex(item)
 
-		debugText('Loading settings from crt.ini')
-		iniFile = f'{mameDir}{os.path.sep}crt.ini'
+		debugText('Loading settings from raster.ini')
+		iniFile = f'{mameDir}{os.path.sep}raster.ini'
 		if os.path.isfile(iniFile):
 			mameINI = open(iniFile, 'r')
 			currentINI = mameINI.readlines()
 			mameINI.close()
 			for iniLine in currentINI:
-				debugText(f'Screen chains in {iniFile}: {iniLine}')
 				if iniLine.startswith('bgfx_screen_chains '):
 					for item in range(0, self.chainsCombo.count()):
 						if f'{self.chainsCombo.itemText(item)}\n' in iniLine or iniLine.endswith(self.chainsCombo.itemText(item)):
 							self.chainsCombo.setCurrentIndex(item)
+
+		debugText('Loading settings from vector.ini')
+		iniFile = f'{mameDir}{os.path.sep}vector.ini'
+		if os.path.isfile(iniFile):
+			mameINI = open(iniFile, 'r')
+			currentINI = mameINI.readlines()
+			mameINI.close()
+			self.hlslCheck.setChecked(False)
+			for iniLine in currentINI:
+				if iniLine.startswith('hlsl_enable '):
+					if '1' in iniLine:
+						self.hlslCheck.setChecked(True)
+				if iniLine.startswith('bgfx_screen_chains '):
+					if 'hlsl' in iniLine:
+						self.hlslCheck.setChecked(True)
 
 	def runGeneration(self, s):
 		if makeCtrlr == 1:
@@ -2050,7 +2292,7 @@ def mapGameControls(game):
 		playerControls[0]['PAUSE'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyDirection['UP']['internalname']}", \
 			'mamemap': 'UI_PAUSE', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyDirection['UP']['friendlyname']}"}
 		playerControls[0]['REWIND_SINGLE'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyDirection['LEFT']['internalname']}", \
-			'mamemap': 'UI_REWIND_SINGLE', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyDirection['LEFT']['friendlyname']}"}		
+			'mamemap': 'UI_REWIND_SINGLE', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyDirection['LEFT']['friendlyname']}"}
 		playerControls[0]['SAVE STATE'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyControls['BUTTON3']['internalname']} OR KEYCODE_LSHIFT KEYCODE_F7", \
 			'mamemap': 'UI_SAVE_STATE', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyControls['BUTTON3']['friendlyname']}"}
 		playerControls[0]['LOAD STATE'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyControls['BUTTON4']['internalname']} OR KEYCODE_F7", \

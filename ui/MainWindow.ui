@@ -243,7 +243,7 @@
         </rect>
        </property>
        <property name="title">
-        <string>Layout Preference (Gamepad)</string>
+        <string>Layout Preference</string>
        </property>
        <widget class="QRadioButton" name="layoutRadio0">
         <property name="geometry">
@@ -592,7 +592,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Map Hotkeys (Select + Button)</string>
+        <string>Map Hotkeys (Coin + Button)</string>
        </property>
       </widget>
       <widget class="QCheckBox" name="devButtonCheck">
@@ -1130,7 +1130,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>Screen Chains (SVG)</string>
+         <string>Screen Chains (Other)</string>
         </property>
        </widget>
        <widget class="QComboBox" name="svgChainsCombo">
@@ -1150,7 +1150,7 @@
         <property name="geometry">
          <rect>
           <x>140</x>
-          <y>60</y>
+          <y>100</y>
           <width>101</width>
           <height>20</height>
          </rect>
@@ -1162,6 +1162,20 @@
          <string>Mixed Screens</string>
         </property>
        </widget>
+       <widget class="QCheckBox" name="hlslCheck">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>60</y>
+          <width>101</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Use HLSL for 
+Vector Displays</string>
+        </property>
+       </widget>
       </widget>
       <widget class="QGroupBox" name="groupBox_5">
        <property name="geometry">
@@ -1169,7 +1183,7 @@
          <x>270</x>
          <y>10</y>
          <width>141</width>
-         <height>51</height>
+         <height>161</height>
         </rect>
        </property>
        <property name="title">
@@ -1186,6 +1200,78 @@
         </property>
         <property name="text">
          <string>Crop to Screen</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_8">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>50</y>
+          <width>121</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Default Artwork (H)</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="horizontalEdit">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>70</y>
+          <width>91</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="horizontalButton">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>70</y>
+          <width>31</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_9">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>100</y>
+          <width>121</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Default Artwork (V)</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="verticalButton">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>120</y>
+          <width>31</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="verticalEdit">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>120</y>
+          <width>91</width>
+          <height>21</height>
+         </rect>
         </property>
        </widget>
       </widget>
@@ -1225,9 +1311,9 @@
        <property name="geometry">
         <rect>
          <x>270</x>
-         <y>60</y>
+         <y>170</y>
          <width>141</width>
-         <height>71</height>
+         <height>111</height>
         </rect>
        </property>
        <property name="title">
@@ -1257,6 +1343,35 @@
         </property>
         <property name="text">
          <string>Autosave</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_7">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>60</y>
+          <width>121</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Rewind Capacity (MB)</string>
+        </property>
+       </widget>
+       <widget class="QSpinBox" name="rewindBox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>80</y>
+          <width>121</width>
+          <height>22</height>
+         </rect>
+        </property>
+        <property name="maximum">
+         <number>10240</number>
+        </property>
+        <property name="value">
+         <number>100</number>
         </property>
        </widget>
       </widget>
