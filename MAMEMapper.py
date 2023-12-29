@@ -38,7 +38,8 @@ class mainWindow(QMainWindow):
 
 		# Fill in lists
 		isLoading = True
-		for controller in controllerTypes.keys():
+		controllerList = sorted(controllerTypes.keys())
+		for controller in controllerList:
 			self.controllerType.addItem(controller)
 		for mappingType in mappingTypes.keys():
 			item = QListWidgetItem(mappingType)
@@ -262,6 +263,7 @@ class mainWindow(QMainWindow):
 		self.cropArtCheck = self.findChild(QCheckBox, 'cropArtCheck')
 		self.autosaveCheck = self.findChild(QCheckBox, 'autosaveCheck')
 		self.rewindCheck = self.findChild(QCheckBox, 'rewindCheck')
+		self.rewindLine = self.findChild(QLineEdit, 'rewindLine')
 		self.applyButton = self.findChild(QPushButton, 'applyButton')
 		self.applyButton.clicked.connect(self.writeINIFile)
 		self.iniLoadButton = self.findChild(QPushButton, 'iniLoadButton')
@@ -412,7 +414,8 @@ class mainWindow(QMainWindow):
 		customEdit.exec()
 		isLoading = True
 		self.controllerType.clear()
-		for controller in controllerTypes.keys():
+		controllerList = sorted(controllerTypes.keys())
+		for controller in controllerList:
 			self.controllerType.addItem(controller)
 		controllerData = {}
 		isLoading = False
@@ -436,7 +439,8 @@ class mainWindow(QMainWindow):
 			loadControllerTypes()
 			isLoading = True
 			self.controllerType.clear()
-			for controller in controllerTypes.keys():
+			controllerList = sorted(controllerTypes.keys())
+			for controller in controllerList:
 				self.controllerType.addItem(controller)
 			controllerData = {}
 			isLoading = False
@@ -975,8 +979,10 @@ class mainWindow(QMainWindow):
 		foundCrop = False
 		foundAutosave = False
 		foundRewind = False
+		foundRewindCapacity = False
 
 		# BGFX Chains will be set for up to 4 windows on one monitor for CRTs, 1 each for LCD & SVG.
+		# MAME does not process an svg.ini (it uses the default), so we write CRT settings to crt.ini and svg settings to mame.ini
 
 		debugText('Saving settings to mame.ini')
 		iniFile = f'{mameDir}{os.path.sep}mame.ini'
@@ -993,7 +999,7 @@ class mainWindow(QMainWindow):
 						foundBackend = True
 					elif iniLine.startswith('bgfx_screen_chains '):
 						debugText('bgfx screen chains line found in mame.ini')
-						print(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}',end ='\n')
+						print(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}',end ='\n')
 						foundChains = True
 					elif iniLine.startswith('triplebuffer '):
 						debugText('triplebuffer line found in mame.ini')
@@ -1015,6 +1021,10 @@ class mainWindow(QMainWindow):
 						debugText('rewind found in mame.ini')
 						print(f'rewind                    {int(self.rewindCheck.isChecked() == True)}',end ='\n')
 						foundRewind = True
+					elif iniLine.startswith('rewind_capacity '):
+						debugText('rewind capacity found in mame.ini')
+						print(f'rewind_capacity           {int(self.rewindLine.text())}',end ='\n')
+						foundRewindCapacity = True
 					else:
 						print(iniLine, end ='')
 			with open(iniFile, 'a') as mameINI:
@@ -1023,7 +1033,7 @@ class mainWindow(QMainWindow):
 				if not foundBackend:
 					mameINI.write(f'bgfx_backend              {self.bgfxCombo.currentText()}')
 				if not foundChains:
-					mameINI.write(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}')
+					mameINI.write(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}')
 				if not foundTriple:
 					mameINI.write(f'triplebuffer              {int(self.tripleBufferCheck.isChecked() == True)}')
 				if not foundFullscreen:
@@ -1034,18 +1044,21 @@ class mainWindow(QMainWindow):
 					mameINI.write(f'autosave                  {int(self.autosaveCheck.isChecked() == True)}')
 				if not foundRewind:
 					mameINI.write(f'rewind                    {int(self.rewindCheck.isChecked() == True)}')
+				if not foundRewindCapacity:
+					mameINI.write(f'rewind_capacity           {int(self.rewindLine.text())}')
 				mameINI.close()
 		else:
 			with open(iniFile, 'w') as mameINI:
 				newINI = []
 				newINI.append(f'video                     {self.videoCombo.currentText()}')
 				newINI.append(f'bgfx_backend              {self.bgfxCombo.currentText()}')
-				newINI.append(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText(),{self.chainsCombo.currentText()}}')
+				newINI.append(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}')
 				newINI.append(f'triplebuffer              {int(self.tripleBufferCheck.isChecked() == True)}')
 				newINI.append(f'window                    {int(self.fullScreenCheck.isChecked() == False)}')
 				newINI.append(f'artwork_crop              {int(self.cropArtCheck.isChecked() == True)}')
 				newINI.append(f'autosave                  {int(self.autosaveCheck.isChecked() == True)}')
 				newINI.append(f'rewind                    {int(self.rewindCheck.isChecked() == True)}')
+				newINI.append(f'rewind_capacity           {int(self.rewindLine.text())}')
 				mameINI.writelines(newINI)
 				mameINI.close()
 
@@ -1067,7 +1080,7 @@ class mainWindow(QMainWindow):
 			with open(iniFile, 'w') as mameINI:
 				mameINI.write(f'bgfx_screen_chains        {self.lcdChainsCombo.currentText()}\n')
 
-		iniFile = f'{mameDir}{os.path.sep}svg.ini'
+		iniFile = f'{mameDir}{os.path.sep}crt.ini'
 		foundChains = False
 		if os.path.isfile(iniFile):
 			with fileinput.FileInput(iniFile, inplace = True, backup ='.bak') as currentINI:
@@ -1075,15 +1088,15 @@ class mainWindow(QMainWindow):
 					if iniLine.startswith('video '):
 						if iniLine.startswith('bgfx_screen_chains '):
 							debugText('bgfx screen chains line found in svg.ini')
-							print(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}',end ='\n')
+							print(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}',end ='\n')
 							foundChains = True
 			if not foundChains:
 				with open(iniFile, 'w') as mameINI:
-					mameINI.write(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}\n')
+					mameINI.write(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}\n')
 					mameINI.close()
 		else:
 			with open(iniFile, 'w') as mameINI:
-				mameINI.write(f'bgfx_screen_chains        {self.svgChainsCombo.currentText()}\n')
+				mameINI.write(f'bgfx_screen_chains        {self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()},{self.chainsCombo.currentText()}\n')
 				mameINI.close()
 
 		if mixedScreens == 1:
@@ -1182,6 +1195,8 @@ class mainWindow(QMainWindow):
 						self.rewindCheck.setChecked(False)
 					else:
 						self.rewindCheck.setChecked(True)
+				elif iniLine.startswith('rewind_capacity '):
+					self.rewindLine.setText(str(int(iniLine[16:])))
 
 		debugText('Loading settings from lcd.ini')
 		iniFile = f'{mameDir}{os.path.sep}lcd.ini'
@@ -1755,7 +1770,7 @@ def mapGameControls(game):
 	playerControls = []
 	mappingShortNames = []
 	gameDetails = findGame(game)
-	hotkeyRight = {}
+	hotkeyDirection = {}
 	debugText(gameDetails)
 	# Load controls if not loaded.
 	if len(controllerData) == 0:
@@ -1819,10 +1834,11 @@ def mapGameControls(game):
 					else:
 						playerControls[player][control]['mamemap'] = ''
 				if player == 0:
-					if 'RIGHT' in playerControls[player].keys():
-						hotkeyRight = deepcopy(playerControls[player]['RIGHT'])
-					else:
-						hotkeyRight = deepcopy(playerControls[player]['JOYSTICKLEFT_RIGHT'])
+					for direction in ['UP','DOWN','LEFT','RIGHT']:
+						if direction in playerControls[player].keys():
+							hotkeyDirection[direction] = deepcopy(playerControls[player][direction])
+						else:
+							hotkeyDirection[direction] = deepcopy(playerControls[player][f'JOYSTICKLEFT_{direction}'])
 				debugText(f"Left stick mode = {leftStickMode}")
 				match leftStickMode:
 					# DPad + Left Stick
@@ -1986,6 +2002,8 @@ def mapGameControls(game):
 	# Select + L2 = Toggle shaders
 	# Select + R2 = Service button
 	# Select + Right = Fast Forward
+	# Select + Up = Pause
+	# Select + Left = Rewind (one Frame)
 	if playerChecks[0] and hotkeyMode:
 		# Make sure to use un-remapped controls for this.
 		if 'P1_BUTTON1' in currentControls.keys():
@@ -2027,8 +2045,12 @@ def mapGameControls(game):
 			'mamemap': 'POST_PROCESS', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyControls['BUTTON7']['friendlyname']}"}
 		playerControls[0]['SERVICE BUTTON'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyControls['BUTTON8']['internalname']} OR KEYCODE_F2", \
 			'mamemap': 'SERVICE', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyControls['BUTTON8']['friendlyname']}"}
-		playerControls[0]['FAST FORWARD'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyRight['internalname']}", \
-			'mamemap': 'UI_FAST_FORWARD', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyRight['friendlyname']}"}
+		playerControls[0]['FAST FORWARD'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyDirection['RIGHT']['internalname']}", \
+			'mamemap': 'UI_FAST_FORWARD', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyDirection['RIGHT']['friendlyname']}"}
+		playerControls[0]['PAUSE'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyDirection['UP']['internalname']}", \
+			'mamemap': 'UI_PAUSE', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyDirection['UP']['friendlyname']}"}
+		playerControls[0]['REWIND_SINGLE'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyDirection['LEFT']['internalname']}", \
+			'mamemap': 'UI_REWIND_SINGLE', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyDirection['LEFT']['friendlyname']}"}		
 		playerControls[0]['SAVE STATE'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyControls['BUTTON3']['internalname']} OR KEYCODE_LSHIFT KEYCODE_F7", \
 			'mamemap': 'UI_SAVE_STATE', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyControls['BUTTON3']['friendlyname']}"}
 		playerControls[0]['LOAD STATE'] = {'internalname': f"{hotkeyButton['internalname']} {hotkeyControls['BUTTON4']['internalname']} OR KEYCODE_F7", \
