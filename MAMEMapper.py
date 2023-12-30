@@ -2533,7 +2533,7 @@ if __name__ == '__main__':
 	global controlEmoji
 	global notCloneKeys
 
-	version = 0.01
+	version = 0.02
 	printDebugMessages = False
 	scriptDir = os.path.dirname(os.path.abspath(sys.argv[0]))
 
