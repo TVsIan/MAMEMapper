@@ -2059,9 +2059,11 @@ def mapGameControls(game):
 					for control in currentControls.keys():
 						if control.startswith(f'P{player+1}_'):
 							copyFrom[control[3:]] = deepcopy(currentControls[control])
+					playerControls.append(deepcopy(copyFrom))
+					debugText(f'Stripped controls:\n{playerControls[player].keys()}')
 				else:
-					playerControls.append(deepcopy(currentControls))
 					copyFrom = deepcopy(currentControls)
+					playerControls.append(deepcopy(copyFrom))
 				for control in playerControls[player].keys():
 					if copyFrom[control]['internalname'].startswith('KEYCODE_'):
 						debugText(f"Setting P{player + 1} {control} to {copyFrom[control]['internalname']}")
@@ -2079,7 +2081,7 @@ def mapGameControls(game):
 					for direction in ['UP','DOWN','LEFT','RIGHT']:
 						if direction in playerControls[player].keys():
 							hotkeyDirection[direction] = deepcopy(playerControls[player][direction])
-						else:
+						elif f'JOYSTICKLEFT_{direction}' in playerControls[player].keys():
 							hotkeyDirection[direction] = deepcopy(playerControls[player][f'JOYSTICKLEFT_{direction}'])
 				debugText(f"Left stick mode = {leftStickMode}")
 				match leftStickMode:
@@ -2158,7 +2160,8 @@ def mapGameControls(game):
 										'internalname': playerControls[player][faceDir]['internalname'], 'mamemap': f"P{player + 1}_{rstickDir}" }
 				if devButtons == 1:
 					for button in range(1,11):
-						playerControls[player][f'BUTTON{button}']['internalname'] = f"{playerControls[player][f'BUTTON{button}']['internalname']} OR GUNCODE{player + 1}_BUTTON{button} OR MOUSECODE{player + 1}_BUTTON{button}"
+						if f'BUTTON{str(button)}' in playerControls[player].keys():
+							playerControls[player][f'BUTTON{button}']['internalname'] = f"{playerControls[player][f'BUTTON{button}']['internalname']} OR GUNCODE{player + 1}_BUTTON{button} OR MOUSECODE{player + 1}_BUTTON{button}"
 				if digitalAnalog == 1:
 					for direction in [ 'UP', 'DOWN', 'LEFT', 'RIGHT']:
 						if direction in copyFrom.keys():
@@ -2246,11 +2249,11 @@ def mapGameControls(game):
 	# Select + Right = Fast Forward
 	# Select + Up = Pause
 	# Select + Left = Rewind (one Frame)
-	if playerChecks[0] and hotkeyMode:
+	if playerChecks[0] and hotkeyMode and player == 0:
 		# Make sure to use un-remapped controls for this.
 		if 'P1_BUTTON1' in currentControls.keys():
 			debugText('Keyboard or other multiplayer file found, stripping out current player only.')
-			copyFrom = {}
+			hotkeyControls = {}
 			for control in currentControls.keys():
 				if control.startswith(f'P1_'):
 					hotkeyControls[control[3:]] = deepcopy(currentControls[control])
@@ -2299,7 +2302,7 @@ def mapGameControls(game):
 			'mamemap': 'UI_LOAD_STATE', 'friendlyname': f"{hotkeyButton['friendlyname']} + {hotkeyControls['BUTTON4']['friendlyname']}"}
 
 	if game != 'default':
-		if getIfExists(gameDetails, 'buttons') == 1 and singleButton  and controllerID in ['x360', 'sony']:
+		if getIfExists(gameDetails, 'buttons') == 1 and singleButton:
 			# Duplicate Button 1 for single-button games
 			for player in range(0, len(playerControls)):
 				playerControls[player]['BUTTON1']['internalname'] = f"{playerControls[player]['BUTTON1']['internalname']} OR {playerControls[player]['BUTTON2']['internalname']}"
