@@ -477,9 +477,9 @@ class mainWindow(QMainWindow):
 
 		# Enable/disable various options based on selected players.
 		if self.pCheck[0].isChecked():
-			self.hotkeysGroup.setEnabled(True)
+			self.hotkeyCheck.setEnabled(True)
 		else:
-			self.hotkeysGroup.setEnabled(False)
+			self.hotkeyCheck.setEnabled(False)
 
 		if self.pCheck[0].isEnabled() and self.pCheck[1].isChecked():
 			self.rightRadio[3].setEnabled(True)
@@ -2088,6 +2088,8 @@ def mapGameControls(game):
 		maxPlayers = getIfExists(gameDetails, 'playercount')
 	if maxPlayers > 4:
 		maxPlayers = 4
+	if maxPlayers == 1 and rightStickMode == 4:
+		maxPlayers = 2
 	debugText(f"Max Players for {game}: {maxPlayers}")
 	for player in range(0, maxPlayers):
 		if playerChecks[player]:
@@ -2273,7 +2275,7 @@ def mapGameControls(game):
 		for direction in ['UP', 'DOWN', 'LEFT', 'RIGHT']:
 			# P1: right stick = P2 left stick
 			stickSwap[0][f'JOYSTICKRIGHT_{direction}'] = playerControls[1][f'JOYSTICKLEFT_{direction}']
-		for player in range (0, 4):
+		for player in range (0, 2):
 			playerControls[player] = stickSwap[player]
 
 	# Map hotkeys (if checked and player 1 controls are selected)
@@ -2579,7 +2581,7 @@ if __name__ == '__main__':
 	global controlEmoji
 	global notCloneKeys
 
-	version = 0.03
+	version = "0.04-test"
 	printDebugMessages = False
 	scriptDir = os.path.dirname(os.path.abspath(sys.argv[0]))
 
