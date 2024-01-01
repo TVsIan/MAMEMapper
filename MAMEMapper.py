@@ -10,6 +10,7 @@ import fnmatch
 import codecs
 import fileinput
 from xml.dom import minidom
+import xml.etree.ElementTree as ET
 from copy import deepcopy
 from datetime import datetime
 from PyQt6.QtGui import QIcon, QPixmap
@@ -164,7 +165,6 @@ class mainWindow(QMainWindow):
 		self.loadButton.clicked.connect(self.loadCustom)
 		self.deleteButton.clicked.connect(self.deleteCustom)
 		self.deleteButton = self.findChild(QPushButton, 'deleteButton')
-		self.deleteButton.clicked.connect(self.deleteCustom)
 		self.mameButton = self.findChild(QPushButton, 'mameButton')
 		self.mameButton.clicked.connect(self.locateMAME)
 		self.pathLabel = self.findChild(QLabel, 'pathLabel')
@@ -440,10 +440,11 @@ class mainWindow(QMainWindow):
 	def deleteCustom(self, s):
 		global isLoading
 		global controllerData
+		global selectedController
 
 		confirmation = showMessage('Confirm', 'Delete current custom controller profile?', QMessageBox.Icon.Question, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 		if confirmation == QMessageBox.StandardButton.Yes:
-			controllerFile = f'{scriptDir}{os.path.sep}controllers{os.path.sep}{self.controllerType.text()}'
+			controllerFile = f'{scriptDir}{os.path.sep}controllers{os.path.sep}{self.controllerType.currentText()}.json'
 			if os.path.isfile(controllerFile):
 				os.remove(controllerFile)
 			else:
@@ -1707,6 +1708,10 @@ class customWindow(QDialog):
 		self.connectSignalsSlots()
 		self.okButton.setEnabled(False)
 
+		# Load controls if not loaded.
+		if len(controllerData) == 0:
+			loadControllerData()
+
 		self.controllerCombo.addItems(controllerTypes.keys())
 		selectedIndex = self.controllerCombo.findText(selectedController)
 		if selectedIndex > -1:
@@ -1755,50 +1760,85 @@ class customWindow(QDialog):
 	def okClicked(self, s):
 		global selectedController
 
-		controllerFile = f'{scriptDir}{os.path.sep}controllers{os.path.sep}{self.nameEdit.text()}'
+		controllerFile = f'{scriptDir}{os.path.sep}controllers{os.path.sep}{self.nameEdit.text()}.json'
 		if os.path.isfile(controllerFile):
 			response = showMessage('Overwrite?', f'{controllerFile} already exists, overwrite?', Qt.Icon.Question, Qt.StandardButton.Yes | Qt.StandardButton.No)
-		if response == Qt.StandardButton.No:
-			return
-		xmlFile = open(sourceFile,'r')
-		cfgData = xmltodict.parse(xmlFile.read())
+			if response == Qt.StandardButton.No:
+				return
+		debugText(f'Loading {sourceFile}...')
+		xmlData = ET.parse(sourceFile)
+		xmlRoot = xmlData.getroot()
+		xmlString = ET.tostring(xmlRoot, encoding='utf-8', method='xml')
+		cfgData = xmltodict.parse(xmlString)
 		debugText(f'Loaded config file for parsing.\n{cfgData}')
 		for mameInput in cfgData['mameconfig']['system']['input']['port']:
-			if mameInput['@type'] == "P1_BUTTON1":
+			if mameInput['@type'] in ['P1_BUTTON1', 'BUTTON1']:
 				debugText(f"Found button 1: {mameInput['newseq']}")
 				if 'KEYCODE' in mameInput['newseq']['#text']:
 					fileMode = 'kb'
+					debugText('Appears to be in keyboard mode.')
 				else:
 					fileMode = 'joy'
+					debugText('Appears to be in joystick mode.')
 				break
 		newController = {}
-		oldController = self.controllerCombo.text()
+		baseController = self.controllerCombo.currentText()
 		newController['longname'] = self.nameEdit.text()
-		newController['shortname'] = controllerTypes[oldController]
+		newController['shortname'] = controllerTypes[baseController]
 		newController['controls'] = {}
-		debugText(f"Creating {newController['longname']} based on {newController['shortname']}...")
-		# Load controls if not loaded.
-		if len(controllerData) == 0:
-			loadControllerData()
+		debugText(f"Creating {newController['longname']} based on {newController['shortname']}...")		
+		if fileMode == 'joy' and 'P1_BUTTON1' in controllerData['controls'].keys():
+			debugText('Stripping keyboard controls for joystick.')
+			oldController = {}
+			for control in controllerData[baseController]['controls'].keys():
+				if control.startswith('P1_'):
+					oldController['controls'][control[3:]] = deepcopy(controllerData['controls'][control])
+		elif fileMode == 'kb' and 'BUTTON1' in controllerData['controls'].keys():
+			debugText('Duplicating joystick controls for keyboard.')
+			oldController = {}
+			for control in controllerData[baseController]['controls'].keys():
+				for player in range(1, 5):				
+					oldController['controls'][f'P{player}_{control}'] = deepcopy(controllerData['controls'][control])
+		else:
+			oldController = deepcopy(controllerData)
 		for mameInput in cfgData['mameconfig']['system']['input']['port']:
-			if fileMode == 'joy':
+			debugText(f'Mapping {mameInput}')
+			if fileMode == 'joy' and mameInput['@type'].startswith('P1_'):
 				newInput = mameInput['@type'][3:]
 			else:
 				newInput = mameInput['@type']
+			if 'COIN' in newInput or 'START' in newInput:				
+				# Edit COIN & START: MAME uses COIN1/START1, controller files use COIN/START for joy or P1_COIN/P1_START for KB.
+				newInput = newInput[:-1]
+				if fileMode == 'kb':
+					newInput = f'P{mameInput['@type'][-1]}_{newInput}'
+			if newInput.startswith('JOYSTICK_'):
+				newInput = newInput[9:]
+			debugText(f'New input: {newInput}')
 			newController['controls'][newInput] = {}
 			inputList = mameInput['newseq']['#text'].split(' ')
+			debugText(f'Mapped to: {inputList}')
 			newInternalname = None
 			for item in inputList:
 				if item.startswith('JOYCODE_1_'):
-					newInternalname = item[11:]
+					newInternalname = item[10:]
 					break
 				if item.startswith('KEYCODE_'):
 					newInternalname = item
 					break
-			if newInternalname != None:
+			if newInternalname != None and len(str(newInternalname)) > 0:
 				newController['controls'][newInput]['internalname'] = newInternalname
 				if newInput in oldController['controls']:
 					newController['controls'][newInput]['friendlyname'] = getIfExists(newController['controls'][newInput], 'friendlyname')
+					if newController['controls'][newInput]['friendlyname'] == None:
+						newController['controls'][newInput]['friendlyname'] = newInput
+		clearList = []
+		for control in newController['controls'].keys():
+			if 'internalname' not in newController['controls'][control].keys():				
+				clearList.append(control)
+		for control in clearList:
+			debugText(f"Removing blank entry {newController['controls'].pop(control)}")
+		debugText(f'Final remap:\n{newController}')
 		controllerJson = json.dumps(newController, indent=2)
 		jsonFile = open(controllerFile,'w')
 		jsonFile.write(str(controllerJson))
@@ -1890,16 +1930,16 @@ def loadControllerData():
 
 	debugText(f'Loading controller details for {selectedController}...')
 	# Load control defs from json
-	if controllerTypes[selectedController].endswith('*'):
-		controllerFile = f"{scriptDir}{os.path.sep}custom{os.path.sep}{selectedController}.json"
+	if os.path.isfile(f'{scriptDir}{os.path.sep}controllers{os.path.sep}{selectedController}.json'):
+		controllerFile = f"{scriptDir}{os.path.sep}controllers{os.path.sep}{selectedController}.json"
 	else:
 		controllerFile = f"{scriptDir}{os.path.sep}controllers{os.path.sep}{controllerTypes[selectedController]}.json"
+	debugText(f'Loading from file {controllerFile}...')
 	if not os.path.isfile(controllerFile):
 		showMessage('Error loading controls',f'{controllerFile} does not exist.',QMessageBox.Icon.Critical)
 		return
 	controllerData = {}
-	with open(controllerFile, 'r') as jsonFile:
-		debugText(f'Loading custom controller data file {controllerFile}...')
+	with open(controllerFile, 'r') as jsonFile:		
 		controllerData = json.loads(jsonFile.read())
 	win.previewList.clear()
 
@@ -2139,9 +2179,12 @@ def mapGameControls(game):
 								debugText(f"Combining right stick controls: {combinedControl}, {combinedName}")
 								playerControls[player][rstickDir]['internalname'] = combinedControl
 								playerControls[player][rstickDir]['friendlyname'] = combinedName
-							elif rstickDir not in playerControls[player].keys():
+							elif rstickDir not in playerControls[player].keys() and faceDir in playerControls[player].keys():
 								playerControls[player][rstickDir] = { 'friendlyname': playerControls[player][faceDir]['friendlyname'], \
 										'internalname': playerControls[player][faceDir]['internalname'], 'mamemap': f"P{player + 1}_{rstickDir}" }
+							elif faceDir not in playerControls[player].keys() and rstickDir in playerControls[player].keys():
+								playerControls[player][rstickDir] = { 'friendlyname': playerControls[player][rstickDir]['friendlyname'], \
+										'internalname': playerControls[player][rstickDir]['internalname'], 'mamemap': f"P{player + 1}_{rstickDir}" }
 					# Face buttons
 					case 2:
 						for direction in [ 'UP', 'DOWN', 'LEFT', 'RIGHT']:
@@ -2359,8 +2402,8 @@ def controllerTypeExists(nameCheck):
 	return False
 
 def shortNameExists(shortName):
-	for controller in controllerTypes:
-		if controller['shortname'].casefold() == shortName.casefold():
+	for controller in controllerTypes.keys():
+		if controllerTypes[controller].casefold() == shortName.casefold():
 			return True
 	return False
 
@@ -2536,7 +2579,7 @@ if __name__ == '__main__':
 	global controlEmoji
 	global notCloneKeys
 
-	version = 0.02
+	version = 0.03
 	printDebugMessages = False
 	scriptDir = os.path.dirname(os.path.abspath(sys.argv[0]))
 
