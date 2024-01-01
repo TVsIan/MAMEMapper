@@ -2231,33 +2231,34 @@ def mapGameControls(game):
 				analogDir[direction] = deepcopy(copyFrom[f'JOYSTICKLEFT_{direction}'])
 				if not analogDir[direction]['internalname'].startswith('KEYCODE_'):
 					analogDir[direction]['internalname'] = f"JOYCODE_{player + 1}_{analogDir[direction]['internalname']}"
-		if len(digitalDir) == 4 and len(analogDir) == 4:
-			playerControls[player]['UP']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['RIGHT']['internalname']} OR {analogDir['UP']['internalname']} {analogDir['RIGHT']['internalname']}"
-			playerControls[player]['RIGHT']['internalname'] = f"{digitalDir['DOWN']['internalname']} {digitalDir['RIGHT']['internalname']} OR {analogDir['DOWN']['internalname']} {analogDir['RIGHT']['internalname']}"
-			playerControls[player]['DOWN']['internalname'] = f"{digitalDir['DOWN']['internalname']} {digitalDir['LEFT']['internalname']} OR {analogDir['DOWN']['internalname']} {analogDir['LEFT']['internalname']}"
-			playerControls[player]['LEFT']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['LEFT']['internalname']} OR {analogDir['UP']['internalname']} {analogDir['LEFT']['internalname']}"
-			playerControls[player]['UP']['friendlyname'] = f"{digitalDir['UP']['friendlyname']}&{digitalDir['RIGHT']['friendlyname']}/{analogDir['UP']['friendlyname']}&{analogDir['RIGHT']['friendlyname']}"
-			playerControls[player]['RIGHT']['friendlyname'] = f"{digitalDir['DOWN']['friendlyname']}&{digitalDir['RIGHT']['friendlyname']}/{analogDir['DOWN']['friendlyname']}&{analogDir['RIGHT']['friendlyname']}"
-			playerControls[player]['DOWN']['friendlyname'] = f"{digitalDir['DOWN']['friendlyname']}&{digitalDir['LEFT']['friendlyname']}/{analogDir['DOWN']['friendlyname']}&{analogDir['LEFT']['friendlyname']}"
-			playerControls[player]['LEFT']['friendlyname'] = f"{digitalDir['UP']['friendlyname']}&{digitalDir['LEFT']['friendlyname']}/{analogDir['UP']['friendlyname']}&{analogDir['LEFT']['friendlyname']}"
-		elif len(digitalDir) == 4:
-			playerControls[player]['UP']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['RIGHT']['internalname']}"
-			playerControls[player]['RIGHT']['internalname'] = f"{digitalDir['DOWN']['internalname']} {digitalDir['RIGHT']['internalname']}"
-			playerControls[player]['DOWN']['internalname'] = f"{digitalDir['DOWN']['internalname']} {digitalDir['LEFT']['internalname']}"
-			playerControls[player]['LEFT']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['LEFT']['internalname']}"
-			playerControls[player]['UP']['friendlyname'] = f"{digitalDir['UP']['friendlyname']}&{digitalDir['RIGHT']['friendlyname']}"
-			playerControls[player]['RIGHT']['friendlyname'] = f"{digitalDir['DOWN']['friendlyname']}&{digitalDir['RIGHT']['friendlyname']}"
-			playerControls[player]['DOWN']['friendlyname'] = f"{digitalDir['DOWN']['friendlyname']}&{digitalDir['LEFT']['friendlyname']}"
-			playerControls[player]['LEFT']['friendlyname'] = f"{digitalDir['UP']['friendlyname']}&{digitalDir['LEFT']['friendlyname']}"
-		elif len(analogDir) == 4:
-			playerControls[player]['UP']['internalname'] = f"{analogDir['UP']['internalname']} {analogDir['RIGHT']['internalname']}"
-			playerControls[player]['RIGHT']['internalname'] = f"{analogDir['DOWN']['internalname']} {analogDir['RIGHT']['internalname']}"
-			playerControls[player]['DOWN']['internalname'] = f"{analogDir['DOWN']['internalname']} {analogDir['LEFT']['internalname']}"
-			playerControls[player]['LEFT']['internalname'] = f"{analogDir['UP']['internalname']} {analogDir['LEFT']['internalname']}"
-			playerControls[player]['UP']['friendlyname'] = f"{analogDir['UP']['friendlyname']}&{analogDir['RIGHT']['friendlyname']}"
-			playerControls[player]['RIGHT']['friendlyname'] = f"{analogDir['DOWN']['friendlyname']}&{analogDir['RIGHT']['friendlyname']}"
-			playerControls[player]['DOWN']['friendlyname'] = f"{analogDir['DOWN']['friendlyname']}&{analogDir['LEFT']['friendlyname']}"
-			playerControls[player]['LEFT']['friendlyname'] = f"{analogDir['UP']['friendlyname']}&{analogDir['LEFT']['friendlyname']}"
+		for player in range(0, maxPlayers):
+			if len(digitalDir) == 4 and len(analogDir) == 4:
+				playerControls[player]['UP']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['RIGHT']['internalname']} OR {analogDir['UP']['internalname']} {analogDir['RIGHT']['internalname']}"
+				playerControls[player]['RIGHT']['internalname'] = f"{digitalDir['DOWN']['internalname']} {digitalDir['RIGHT']['internalname']} OR {analogDir['DOWN']['internalname']} {analogDir['RIGHT']['internalname']}"
+				playerControls[player]['DOWN']['internalname'] = f"{digitalDir['DOWN']['internalname']} {digitalDir['LEFT']['internalname']} OR {analogDir['DOWN']['internalname']} {analogDir['LEFT']['internalname']}"
+				playerControls[player]['LEFT']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['LEFT']['internalname']} OR {analogDir['UP']['internalname']} {analogDir['LEFT']['internalname']}"
+				playerControls[player]['UP']['friendlyname'] = f"{digitalDir['UP']['friendlyname']}&{digitalDir['RIGHT']['friendlyname']}/{analogDir['UP']['friendlyname']}&{analogDir['RIGHT']['friendlyname']}"
+				playerControls[player]['RIGHT']['friendlyname'] = f"{digitalDir['DOWN']['friendlyname']}&{digitalDir['RIGHT']['friendlyname']}/{analogDir['DOWN']['friendlyname']}&{analogDir['RIGHT']['friendlyname']}"
+				playerControls[player]['DOWN']['friendlyname'] = f"{digitalDir['DOWN']['friendlyname']}&{digitalDir['LEFT']['friendlyname']}/{analogDir['DOWN']['friendlyname']}&{analogDir['LEFT']['friendlyname']}"
+				playerControls[player]['LEFT']['friendlyname'] = f"{digitalDir['UP']['friendlyname']}&{digitalDir['LEFT']['friendlyname']}/{analogDir['UP']['friendlyname']}&{analogDir['LEFT']['friendlyname']}"
+			elif len(digitalDir) == 4:
+				playerControls[player]['UP']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['RIGHT']['internalname']}"
+				playerControls[player]['RIGHT']['internalname'] = f"{digitalDir['DOWN']['internalname']} {digitalDir['RIGHT']['internalname']}"
+				playerControls[player]['DOWN']['internalname'] = f"{digitalDir['DOWN']['internalname']} {digitalDir['LEFT']['internalname']}"
+				playerControls[player]['LEFT']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['LEFT']['internalname']}"
+				playerControls[player]['UP']['friendlyname'] = f"{digitalDir['UP']['friendlyname']}&{digitalDir['RIGHT']['friendlyname']}"
+				playerControls[player]['RIGHT']['friendlyname'] = f"{digitalDir['DOWN']['friendlyname']}&{digitalDir['RIGHT']['friendlyname']}"
+				playerControls[player]['DOWN']['friendlyname'] = f"{digitalDir['DOWN']['friendlyname']}&{digitalDir['LEFT']['friendlyname']}"
+				playerControls[player]['LEFT']['friendlyname'] = f"{digitalDir['UP']['friendlyname']}&{digitalDir['LEFT']['friendlyname']}"
+			elif len(analogDir) == 4:
+				playerControls[player]['UP']['internalname'] = f"{analogDir['UP']['internalname']} {analogDir['RIGHT']['internalname']}"
+				playerControls[player]['RIGHT']['internalname'] = f"{analogDir['DOWN']['internalname']} {analogDir['RIGHT']['internalname']}"
+				playerControls[player]['DOWN']['internalname'] = f"{analogDir['DOWN']['internalname']} {analogDir['LEFT']['internalname']}"
+				playerControls[player]['LEFT']['internalname'] = f"{analogDir['UP']['internalname']} {analogDir['LEFT']['internalname']}"
+				playerControls[player]['UP']['friendlyname'] = f"{analogDir['UP']['friendlyname']}&{analogDir['RIGHT']['friendlyname']}"
+				playerControls[player]['RIGHT']['friendlyname'] = f"{analogDir['DOWN']['friendlyname']}&{analogDir['RIGHT']['friendlyname']}"
+				playerControls[player]['DOWN']['friendlyname'] = f"{analogDir['DOWN']['friendlyname']}&{analogDir['LEFT']['friendlyname']}"
+				playerControls[player]['LEFT']['friendlyname'] = f"{analogDir['UP']['friendlyname']}&{analogDir['LEFT']['friendlyname']}"
 
 	# Cross-player left/right sticks - requires all controls to be set first.
 	if sum(playerChecks) == 4 and leftStickMode == 4:
