@@ -2231,7 +2231,8 @@ def mapGameControls(game):
 				analogDir[direction] = deepcopy(copyFrom[f'JOYSTICKLEFT_{direction}'])
 				if not analogDir[direction]['internalname'].startswith('KEYCODE_'):
 					analogDir[direction]['internalname'] = f"JOYCODE_{player + 1}_{analogDir[direction]['internalname']}"
-		for player in range(0, maxPlayers):
+		for player in range(0, 2):
+			debugText(f'Mapping diagonal only for player {player + 1}...')
 			if len(digitalDir) == 4 and len(analogDir) == 4:
 				playerControls[player]['UP']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['RIGHT']['internalname']} OR {analogDir['UP']['internalname']} {analogDir['RIGHT']['internalname']}"
 				playerControls[player]['RIGHT']['internalname'] = f"{digitalDir['DOWN']['internalname']} {digitalDir['RIGHT']['internalname']} OR {analogDir['DOWN']['internalname']} {analogDir['RIGHT']['internalname']}"
@@ -2495,7 +2496,7 @@ def saveConfig():
 	config['Advanced']['rightStickMode'] = str(rightStickMode)
 	config['Advanced']['remap3124'] = str(remap4p)
 	config['Advanced']['parentOnly'] = str(parentOnly)
-	config['Advanced']['DoubleSingle'] = str(singleButton)
+	config['Advanced']['singleButton'] = str(singleButton)
 	config['Advanced']['applyMappings'] = json.dumps(applyMappings)
 	config['Advanced']['makeCtrlr'] = str(makeCtrlr)
 	config['Advanced']['saveDefault'] = str(saveDefault)
@@ -2661,6 +2662,8 @@ if __name__ == '__main__':
 				buttonLayout = config['Advanced']['buttonLayout']
 			if 'swapPrimary' in config['Advanced']:
 				swapPrimary = int(config['Advanced']['swapPrimary'])
+			if 'singleButton' in config['Advanced']:
+				singleButton = int(config['Advanced']['singleButton'])
 			if 'hotkeyMode' in config['Advanced']:
 				hotkeyMode = int(config['Advanced']['hotkeyMode'])
 			if 'leftStickMode' in config['Advanced']:
