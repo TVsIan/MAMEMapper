@@ -35,6 +35,11 @@
 		"BUTTON3":"BUTTON5",
 		"BUTTON4":"BUTTON6"
 	},
+	"fcom": {
+		"BUTTON2":"BUTTON4",
+		"BUTTON3":"BUTTON5",
+		"BUTTON4":"BUTTON6"
+	},
 	"retro6": {
 		"BUTTON2":"BUTTON4",
 		"BUTTON3":"BUTTON5",

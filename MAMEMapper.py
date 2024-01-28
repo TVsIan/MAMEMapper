@@ -726,8 +726,8 @@ class mainWindow(QMainWindow):
 		debugText(f"{shortName} max players: {maxPlayers}, buttons: {getIfExists(gameData, 'buttons', 12)}")
 		for player in range(0, maxPlayers):
 			for control in gameControls[player].keys():
-				if 'FACE' not in control and 'ANALOG_' not in control:
-					if getIfExists(controlNames, gameControls[player][control]['mamemap']) != None:
+				if 'mamemap' in gameControls[player][control].keys():
+					if 'FACE' not in control and 'ANALOG_' not in control and getIfExists(controlNames, gameControls[player][control]['mamemap']) != None:
 						controlText = getIfExists(controlNames, gameControls[player][control]['mamemap'])
 					elif player > 0 and getIfExists(controlNames, gameControls[0][control]['mamemap']) != None:
 						controlText = getIfExists(controlNames, gameControls[0][control]['mamemap'])
@@ -1145,7 +1145,7 @@ class mainWindow(QMainWindow):
 
 			newINI = []
 			for iniLine in currentINI:
-				if iniLine.startswith('fallback_artwork '):					
+				if iniLine.startswith('fallback_artwork '):
 					debugText('fallback artwork line found in vertical.ini')
 					newINI.append(f'fallback_artwork         {self.verticalEdit.text()}\n')
 					foundVertical = True
@@ -1538,7 +1538,7 @@ class mainWindow(QMainWindow):
 										leftData = mainXML.createTextNode(gameControls[player]['ANALOG_LEFT']['internalname'])
 										xmlDecrement.appendChild(leftData)
 										xmlInput.appendChild(xmlPort)
-						elif 'FACE' not in control:
+						elif 'FACE' not in control and 'mamemap' in gameControls[player][control].keys():
 							if getIfExists(gameControls[player][control], 'mamemap') != '':
 								xmlPort = mainXML.createElement('port')
 								xmlPort.setAttribute('type', gameControls[player][control]['mamemap'])
@@ -1786,7 +1786,7 @@ class customWindow(QDialog):
 		newController['longname'] = self.nameEdit.text()
 		newController['shortname'] = controllerTypes[baseController]
 		newController['controls'] = {}
-		debugText(f"Creating {newController['longname']} based on {newController['shortname']}...")		
+		debugText(f"Creating {newController['longname']} based on {newController['shortname']}...")
 		if fileMode == 'joy' and 'P1_BUTTON1' in controllerData['controls'].keys():
 			debugText('Stripping keyboard controls for joystick.')
 			oldController = {}
@@ -1797,7 +1797,7 @@ class customWindow(QDialog):
 			debugText('Duplicating joystick controls for keyboard.')
 			oldController = {}
 			for control in controllerData[baseController]['controls'].keys():
-				for player in range(1, 5):				
+				for player in range(1, 5):
 					oldController['controls'][f'P{player}_{control}'] = deepcopy(controllerData['controls'][control])
 		else:
 			oldController = deepcopy(controllerData)
@@ -1807,7 +1807,7 @@ class customWindow(QDialog):
 				newInput = mameInput['@type'][3:]
 			else:
 				newInput = mameInput['@type']
-			if 'COIN' in newInput or 'START' in newInput:				
+			if 'COIN' in newInput or 'START' in newInput:
 				# Edit COIN & START: MAME uses COIN1/START1, controller files use COIN/START for joy or P1_COIN/P1_START for KB.
 				newInput = newInput[:-1]
 				if fileMode == 'kb':
@@ -1834,7 +1834,7 @@ class customWindow(QDialog):
 						newController['controls'][newInput]['friendlyname'] = newInput
 		clearList = []
 		for control in newController['controls'].keys():
-			if 'internalname' not in newController['controls'][control].keys():				
+			if 'internalname' not in newController['controls'][control].keys():
 				clearList.append(control)
 		for control in clearList:
 			debugText(f"Removing blank entry {newController['controls'].pop(control)}")
@@ -1939,7 +1939,7 @@ def loadControllerData():
 		showMessage('Error loading controls',f'{controllerFile} does not exist.',QMessageBox.Icon.Critical)
 		return
 	controllerData = {}
-	with open(controllerFile, 'r') as jsonFile:		
+	with open(controllerFile, 'r') as jsonFile:
 		controllerData = json.loads(jsonFile.read())
 	win.previewList.clear()
 
@@ -2003,12 +2003,12 @@ def generateRemapList():
 							gameList.append(game)
 				elif getIfExists(gameData[game], 'buttons') == 4 and neogeo and 'Neo Geo' in applyMappings:
 					gameList.append(game)
-				if remap4p and getIfExists(gameData[game], 'playercount') >= 3:
+				if remap4p and getIfExists(gameData[game], 'playercount', 2) >= 3:
 					gameList.append(game)
 				if 'controls' in gameData[game].keys():
 					if swapPrimary and getIfExists(gameData[game]['controls'], 'P1_BUTTON1') in ['Jump', 'A']:
 						gameList.append(game)
-				if singleButton and getIfExists(gameData[game], 'buttons') == 1:
+				if singleButton and getIfExists(gameData[game], 'buttons', 0) == 1:
 					gameList.append(game)
 			if not parentOnly:
 				for clone in gameData[game].keys():
@@ -2023,12 +2023,12 @@ def generateRemapList():
 										gameList.append(clone)
 							elif getIfExists(gameData[game][clone], 'buttons') == 4 and neogeo == 1 and 'Neo Geo' in applyMappings:
 								gameList.append(clone)
-							if remap4p and getIfExists(gameData[game][clone], 'playercount') >= 3:
+							if remap4p and getIfExists(gameData[game][clone], 'playercount', 2) >= 3:
 								gameList.append(clone)
 							if 'controls' in gameData[game][clone].keys():
 								if swapPrimary and getIfExists(gameData[game][clone]['controls'], 'P1_BUTTON1') in ['Jump', 'A']:
 									gameList.append(clone)
-							if singleButton and getIfExists(gameData[game][clone], 'buttons') == 1:
+							if singleButton and getIfExists(gameData[game][clone], 'buttons', 0) == 1:
 								gameList.append(clone)
 	# Clear duplicates if any
 	gameList = list(dict.fromkeys(gameList))
@@ -2085,7 +2085,7 @@ def mapGameControls(game):
 	if game == 'default' or getIfExists(gameDetails, 'playercount') == None:
 		maxPlayers = 4
 	else:
-		maxPlayers = getIfExists(gameDetails, 'playercount')
+		maxPlayers = getIfExists(gameDetails, 'playercount', 2)
 	if maxPlayers > 4:
 		maxPlayers = 4
 	if maxPlayers == 1 and rightStickMode == 4:
@@ -2231,7 +2231,7 @@ def mapGameControls(game):
 				analogDir[direction] = deepcopy(copyFrom[f'JOYSTICKLEFT_{direction}'])
 				if not analogDir[direction]['internalname'].startswith('KEYCODE_'):
 					analogDir[direction]['internalname'] = f"JOYCODE_{player + 1}_{analogDir[direction]['internalname']}"
-		for player in range(0, 2):
+		for player in range(0, maxPlayers):
 			debugText(f'Mapping diagonal only for player {player + 1}...')
 			if len(digitalDir) == 4 and len(analogDir) == 4:
 				playerControls[player]['UP']['internalname'] = f"{digitalDir['UP']['internalname']} {digitalDir['RIGHT']['internalname']} OR {analogDir['UP']['internalname']} {analogDir['RIGHT']['internalname']}"
@@ -2373,6 +2373,7 @@ def mapGameControls(game):
 				playerControls = deepcopy(swapControls)
 		except:
 			debugText('No player number in game data or less than 4 players.')
+
 	debugText(f'Controls after mapping:\n{playerControls}')
 	return playerControls
 
@@ -2583,7 +2584,7 @@ if __name__ == '__main__':
 	global controlEmoji
 	global notCloneKeys
 
-	version = "0.04-test"
+	version = "0.04"
 	printDebugMessages = False
 	scriptDir = os.path.dirname(os.path.abspath(sys.argv[0]))
 
