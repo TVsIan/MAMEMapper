@@ -1,5 +1,5 @@
 ﻿# MAMEMapper
-WIP readme file for v0.01 (Initial Release) - screenshots etc. will be added.
+WIP readme file for v0.05
 
 ## What is it?
 
@@ -40,13 +40,13 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
  - **DInput (Sony Style):** DualShock/[DualSense](https://www.playstation.com/en-us/accessories/dualsense-wireless-controller/). Sony controllers like to send both a button and axis when the analog triggers are pressed, this will use the button as input. In addition, it maps MAME button 11 to the touchpad click, though none of the game-specific mappings will use it.
  - **DInput (Switch Style, Bluetooth):** Nintendo Classic/[Pro](https://www.nintendo.com/us/store/products/pro-controller/)/Dual Joycon layout. This was generated with a Switch Pro controller connected via Bluetooth, as the USB connection only seems to work properly in Steam with Switch controller support enabled.
  - **6-Button (8BitDo M30 XInput):** Uses the layout for the [8BitDo M30 controller](https://download.8bitdo.com/Manual/Controller/M30/M30_Manual.pdf?20220513) when it is in XInput mode. Assumes a controller will have 6 face buttons + 2 shoulder buttons. Use this as a base if you're mapping other 6-button controllers with a set of shoulder buttons (ie a Saturn controller). The DPad is treated as a left analog stick.
+ - **6-Button (Hori Fighting Commander):** Based on the [Fighting Commander Octa for PC.](https://stores.horiusa.com/HPC-046U/) 6 face buttons, 4 shoulder buttons, 2 analog sticks, and a d-pad. For this particular controller, the stick click buttons are used as shoulder buttons, since RB/RT are face buttons (to match a fightstick layout). 
  - **6-Button (Retroarch Genesis/Megadrive):** Uses the [layout](https://docs.libretro.com/library/genesis_plus_gx/#joypad) that Retroarch uses for 6-button Sega pads, assumes there are 6 face buttons and no shoulder buttons.
  - **Modern Fightstick:** 8 buttons, with the 3rd column being R1/R2 and the 4th L1/L2 (as seen [here](https://download.8bitdo.com/Manual/Controller/Xbox/Arcade-Stick-for-Xbox.pdf?20231201)). Assumes the stick will be set to D-Pad mode. Older sticks may need to create a custom version of this, as the L/R button placement varied.
  - **6/4 Button (KB):** An arcade panel with 6 buttons each for P1/2 and 4 buttons for 3/4, using default keyboard inputs. Similar to the panel shown [here](https://99livesarcade.com/store/ols/products/four-player-control-panels-arcade1up-only-32x12x4-approx-sanwa-sticks).
  - **6 Buttons w/Offset 7th (KB):** An arcade panel using a hybrid layout with 6 standard buttons and one offset to the lower left, common for layouts that work for Neo Geo and 6-button fighting games. The layout assumes the offset button is #7, and does add an 8th assumed to be left of it, but nothing requires it. An example is the player 1 & 2 controls on [this](https://www.ultimarc.com/arcade-control-panel/) panel.
  - **IPAC 4 - All Inputs (KB):** An arcade panel set up for 4 players, 8 buttons each, using the default [IPAC 4](https://www.ultimarc.com/control-interfaces/i-pacs/i-pac4-board/) keyboard mappings. This should also work for the IPAC 2, but will map keys as if there were 4 players. The default mappings do include keys that MAME uses for menus etc, it may be a good idea to use the Hotkeys option if using this for more than 2 players. If used as a base for custom mapping, unused players will be ignored.
  - **Future?:** Possible additions for controllers with unique layouts and other features.
-   - The Hori Fighting Commander Octa for PC will likely be added as a new base configuration at the end of January when it releases, as having 6 face buttons, a D-Pad, and two analog sticks is fairly unique  and well suited for emulators. This could also be used as a base for Retro-Bit's Saturn analog controller, which has the same specs.
    - Older fightsticks may be worth adding, though most of them could be done with a custom controller mapped to the Retroarch 6-button layout or the Modern Fightstick layout.
    - Other arcade panel layouts that may need supported mappings, ie. a panel with an extra Tron stick.
    - Dedicated analog control mapping - ie. set device order, and set specific devices to trackball, dial, lightgun, paddle, etc. per player.
