@@ -72,6 +72,7 @@ class mainWindow(QMainWindow):
 			case _:
 				self.layoutRadio[1].setChecked(True)
 		self.primaryCheck.setChecked(swapPrimary)
+		self.altCheck.setChecked(skipAlt)
 		self.singleCheck.setChecked(singleButton)
 		self.hotkeyCheck.setChecked(hotkeyMode)
 		self.leftRadio[leftStickMode - 1].setChecked(True)
@@ -187,6 +188,8 @@ class mainWindow(QMainWindow):
 		self.layoutRadio[1].toggled.connect(self.layoutToggle)
 		self.primaryCheck = self.findChild(QCheckBox, 'primaryCheck')
 		self.primaryCheck.toggled.connect(self.primaryToggle)
+		self.altCheck = self.findChild(QCheckBox, 'altCheck')
+		self.altCheck.toggled.connect(self.altToggle)
 		self.singleCheck = self.findChild(QCheckBox, 'singleCheck')
 		self.singleCheck.toggled.connect(self.singleToggle)
 		self.hotkeyCheck = self.findChild(QCheckBox, 'hotkeyCheck')
@@ -522,6 +525,17 @@ class mainWindow(QMainWindow):
 		else:
 			swapPrimary = 0
 
+	def altToggle(self, s):
+		global skipAlt
+
+		if isLoading:
+			return
+
+		if self.altCheck.isChecked():
+			skipAlt = 1
+		else:
+			skipAlt = 0
+
 	def singleToggle(self, s):
 		global singleButton
 
@@ -720,27 +734,24 @@ class mainWindow(QMainWindow):
 		shortName = currentGame.toolTip()
 		gameData = findGame(shortName)
 		gameControls = mapGameControls(shortName)
-		maxPlayers = getIfExists(gameData, 'playercount')
-		if maxPlayers == None:
-			maxPlayers = 4
+		maxPlayers = getIfExists(gameData, 'playercount', 4)
 		self.previewList.clear()
 		debugText(f"{shortName} max players: {maxPlayers}, buttons: {getIfExists(gameData, 'buttons', 12)}")
 		for player in range(0, maxPlayers):
 			for control in gameControls[player].keys():
-				controlText = ''
-				if 'mamemap' in gameControls[player][control].keys():
-					if 'FACE' not in control and 'ANALOG_' not in control and getIfExists(gameControls[player][control], 'name'):
-						controlText = gameControls[player][control]['name'].title()
-					elif player > 0 and getIfExists(gameControls[0][control], 'name'):
-						controlText = gameControls[0][control]['name'].title()
+				if '_' not in control:
+					controlText = ''
+					if 'mamemap' in gameControls[player][control].keys():
+						if getIfExists(gameControls[player][control], 'name'):
+							controlText = gameControls[player][control]['name'].title()
+						elif player > 0 and getIfExists(gameControls[0][control], 'name'):
+							controlText = gameControls[0][control]['name'].title()
+						else:
+							controlText = control.title()
 					else:
 						controlText = control.title()
-				else:
-					controlText = control.title()
-				if len(controlText) >= 7 and controlText[0:6] == 'Button' and controlText[6] != ' ':
-					controlText = f'{controlText[0:6]} {controlText[6:]}'
-				debugText(f'Control Value: {control}, Control Text: {controlText}')
-				if controlInGame(gameData, gameControls[player][control]):
+					if len(controlText) >= 7 and controlText[0:6] == 'Button' and controlText[6] != ' ':
+						controlText = f'{controlText[0:6]} {controlText[6:]}'
 					debugText(f"Adding {control} to the list: {gameControls[player][control]}")
 					item = QListWidgetItem(f"P{player + 1} {gameControls[player][control]['friendlyname']}: {controlText}")
 					item.setToolTip(gameControls[player][control]['mamemap'])
@@ -1661,9 +1672,9 @@ class mainWindow(QMainWindow):
 						if control in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X'] and digitalAnalog == 1:
 							xmlPort = mainXML.createElement('port')
 							xmlPort.setAttribute('type', f'P{player + 1}_{control}')
-							if f'P{player + 1}_{analogControl}' in gameControls[player].keys():
-								xmlPort.setAttribute('mask', gameControls[player][f'P{player + 1}_{control}']['mask'])
-								xmlPort.setAttribute('tag', gameControls[player][f'P{player + 1}_{control}']['tag'])
+							if 'mask' in gameControls[player][control].keys():
+								xmlPort.setAttribute('mask', gameControls[player][control]['mask'])
+								xmlPort.setAttribute('tag', gameControls[player][control]['tag'])
 								xmlPort.setAttribute('defvalue', '0')
 							xmlIncrement = mainXML.createElement('newseq')
 							xmlIncrement.setAttribute('type', 'increment')
@@ -1679,9 +1690,9 @@ class mainWindow(QMainWindow):
 						elif control in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y'] and digitalAnalog == 1:
 							xmlPort = mainXML.createElement('port')
 							xmlPort.setAttribute('type', f'P{player + 1}_{control}')
-							if f'P{player + 1}_{analogControl}' in gameControls[player].keys():
-								xmlPort.setAttribute('mask', gameControls[player][f'P{player + 1}_{control}']['mask'])
-								xmlPort.setAttribute('tag', gameControls[player][f'P{player + 1}_{control}']['tag'])
+							if 'mask' in gameControls[player][control].keys():
+								xmlPort.setAttribute('mask', gameControls[player][control]['mask'])
+								xmlPort.setAttribute('tag', gameControls[player][control]['tag'])
 								xmlPort.setAttribute('defvalue', '0')
 							xmlIncrement = mainXML.createElement('newseq')
 							xmlIncrement.setAttribute('type', 'increment')
@@ -1695,7 +1706,7 @@ class mainWindow(QMainWindow):
 							xmlDecrement.appendChild(upData)
 							xmlInput.appendChild(xmlPort)
 						elif control not in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X', 'PADDLE_V', 'POSITIONAL_V', \
-							'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y', 'FACE', 'ANALOG_UP', 'ANALOG_DOWN', 'ANALOG_LEFT', 'ANALOG_RIGHT'] and 'mamemap' in gameControls[player][control].keys():
+							'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y', 'FACE', 'ANALOG_UP', 'ANALOG_DOWN', 'ANALOG_LEFT', 'ANALOG_RIGHT'] and getIfExists(gameControls[player][control], 'mamemap', '') != '':
 							if game == 'default' or 'mask' in gameControls[player][control].keys():
 								xmlPort = mainXML.createElement('port')
 								xmlPort.setAttribute('type', gameControls[player][control]['mamemap'])
@@ -2431,7 +2442,8 @@ def mapGameControls(game):
 							debugText(f'Key {key} not found in new control, copying.')
 							playerControls[player][control][key] = gameDetails['controls'][originalName][key]
 			# Tag/Mask for Analog Controls
-			for analogControl in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y', 'PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X']:
+			for analogControl in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y', 'PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', \
+				'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X']:
 				originalName = f'P{player + 1}_{analogControl}'
 				if originalName in gameDetails['controls'].keys():
 					playerControls[player][analogControl] = deepcopy(gameDetails['controls'][originalName])
@@ -2452,6 +2464,20 @@ def mapGameControls(game):
 							playerControls[player][analogControl]['friendlyname'] = f'{playerControls[player]['LEFT']['friendlyname']} &\n{playerControls[player]['RIGHT']['friendlyname']}'
 					else:
 						playerControls[player][analogControl]['friendlyName'] = getIfExists(playerControls[player][analogControl], 'name', 'Analog Device')
+
+		if game != 'default':
+			# Remove unused controls before returning
+			unusedControls = []
+			for player in range(0, len(playerControls)):
+				unusedControls.append([])
+				for control in playerControls[player].keys():
+					if 'ANALOG_' not in control and 'FACE_' not in control:
+						if not controlInGame(gameDetails, playerControls[player][control]):
+							unusedControls[player].append(control)
+			for player in range(0, len(unusedControls)):
+				if len(unusedControls[player]) > 0:
+					for control in unusedControls[player]:
+						playerControls[player].pop(control)
 
 	debugText(f'Controls after mapping:\n{playerControls}')
 	return playerControls
@@ -2492,35 +2518,42 @@ def shortNameExists(shortName):
 			return True
 	return False
 
-def controlInGame(gameData, control):
-	debugText(f"Checking {gameData['description']} for {control}")
+def controlInGame(currentGame, control):
+	debugText(f"Checking {currentGame['description']} for {control}")
+	if len(control.keys()) == 0:
+		debugText('Blank entry somehow')
+		return False
 	if 'mask' not in control.keys():
 		debugText('No MAME port data.')
 		return False
 	if 'mamemap' not in control.keys():
 		debugText('No MAME control name.')
 		return False
-	if fnmatch.fnmatch(control['mamemap'], f'P?_*') and int(control['mamemap'][1]) > int(getIfExists(gameData, 'playercount', 4)):
-		debugText(f'Player # {control["mamemap"][1]} control, max players {getIfExists(gameData, "playercount", 4)}')
+	if fnmatch.fnmatch(control['mamemap'], f'P?_*') and getIfExists(currentGame, 'alternating', False) and int(control['mamemap'][1]) > 1 and skipAlt == 1:
+		debugText('Alternating players, skipping P>1 controls (except Coin/Start)')
 		return False
-	if (control['mamemap'].startswith('COIN') or control['mamemap'].startswith('START')) and int(control['mamemap'][-1]) > int(getIfExists(gameData, 'playercount', 4)):
-		debugText(f'Player # {control["mamemap"][-1]} control, max players {getIfExists(gameData, "playercount", 4)}')
+	if fnmatch.fnmatch(control['mamemap'], f'P?_*') and int(control['mamemap'][1]) > int(getIfExists(currentGame, 'playercount', 4)):
+		debugText(f'Player # {control["mamemap"][1]} control, max players {getIfExists(currentGame, "playercount", 4)}')
+		return False
+	if (control['mamemap'].startswith('COIN') or control['mamemap'].startswith('START')) and int(control['mamemap'][-1]) > int(getIfExists(currentGame, 'playercount', 4)):
+		debugText(f'Player # {control["mamemap"][-1]} control, max players {getIfExists(currentGame, "playercount", 4)}')
 		return False
 	for direction in ['UP', 'DOWN', 'LEFT', 'RIGHT']:
-		if fnmatch.fnmatch(control['mamemap'], f'P?_{direction}') and getIfExists(gameData, 'sticks', 0) != 1:
-			debugText(f'Joystick direction in {getIfExists(gameData, "sticks", 1)} stick game')
+		if fnmatch.fnmatch(control['mamemap'], f'P?_{direction}') and getIfExists(currentGame, 'sticks', 0) != 1:
+			debugText(f'Joystick direction in {getIfExists(currentGame, "sticks", 1)} stick game')
 			return False
-	if ('JOYSTICKLEFT_' in control['mamemap'] or 'JOYSTICKRIGHT_' in control['mamemap']) and getIfExists(gameData, 'sticks', 1) != 2:
-		debugText(f'Left Stick or Right Stick direction in {getIfExists(gameData, "sticks", 1)} stick game')
+	if ('JOYSTICKLEFT_' in control['mamemap'] or 'JOYSTICKRIGHT_' in control['mamemap']) and getIfExists(currentGame, 'sticks', 1) != 2:
+		debugText(f'Left Stick or Right Stick direction in {getIfExists(currentGame, "sticks", 1)} stick game')
 		return False
 	if 'BUTTON' in control['mamemap']:
-		buttonCount = getIfExists(gameData, 'buttons', 12)
-		if control['mamemap'].endswith('10'):
-			buttonNum = 10
+		buttonCount = getIfExists(currentGame, 'buttons', 12)
+		# Note: 10 seems to be the max I've encountered in arcade games, but allowing for up to 19 right now.
+		if control['mamemap'][-2] == '1':
+			buttonNum = int(control['mamemap'][-2:])
 		else:
 			buttonNum = int(control['mamemap'][-1])
 		if buttonNum > buttonCount:
-			debugText(f'Button {buttonNum} in {getIfExists(gameData, "buttons", 12)} button game')
+			debugText(f'Button {buttonNum} in {getIfExists(currentGame, "buttons", 12)} button game')
 			return False
 	if control['mamemap'] == '':
 		debugText('Blank MAME control name.')
@@ -2589,6 +2622,7 @@ def saveConfig():
 	config['Advanced']['rightStickMode'] = str(rightStickMode)
 	config['Advanced']['remap3124'] = str(remap4p)
 	config['Advanced']['parentOnly'] = str(parentOnly)
+	config['Advanced']['skipAlt'] = str(skipAlt)
 	config['Advanced']['singleButton'] = str(singleButton)
 	config['Advanced']['applyMappings'] = json.dumps(applyMappings)
 	config['Advanced']['makeCtrlr'] = str(makeCtrlr)
@@ -2659,6 +2693,7 @@ if __name__ == '__main__':
 	global remap4p
 	global applyMappings
 	global parentOnly
+	global skipAlt
 	global inputDevices
 	global makeCtrlr
 	global saveDefault
@@ -2709,6 +2744,7 @@ if __name__ == '__main__':
 	rightStickMode = 1
 	remap4p = 0
 	parentOnly = 0
+	skipAlt = 1
 	applyMappings = []
 	gameData = {}
 	controllerData = {}
@@ -2765,6 +2801,8 @@ if __name__ == '__main__':
 				remap4p = int(config['Advanced']['remap3124'])
 			if 'parentOnly' in config['Advanced']:
 				parentOnly = int(config['Advanced']['parentOnly'])
+			if 'skipAlt' in config['Advanced']:
+				skipAlt = int(config['Advanced']['skipAlt'])
 			if 'applyMappings' in config['Advanced']:
 				applyMappings = json.loads(config.get('Advanced','applyMappings'))
 			if 'makeCtrlr' in config['Advanced']:

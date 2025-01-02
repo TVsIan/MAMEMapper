@@ -34,6 +34,8 @@ class toolWindow(QDialog):
 		self.xmlButton.clicked.connect(self.loadXML)
 		self.cloneButton = self.findChild(QPushButton, 'cloneButton')
 		self.cloneButton.clicked.connect(self.loadClones)
+		self.alternatingButton = self.findChild(QPushButton, 'alternatingButton')
+		self.alternatingButton.clicked.connect(self.loadAlternating)
 		self.controlButton = self.findChild(QPushButton, 'controlButton')
 		self.controlButton.clicked.connect(self.loadControls)
 		self.mappingButton = self.findChild(QPushButton, 'mappingButton')
@@ -105,7 +107,7 @@ class toolWindow(QDialog):
 			for gameData in mameXML['mame']['machine']:
 				print(f"Processing {gameData['@name']}")
 				if '@runnable' not in gameData.keys() or gameData['@runnable'] != 'no':
-					if '@cloneof' not in gameData.keys():						
+					if '@cloneof' not in gameData.keys():
 						currentGame = {}
 						if 'description' not in currentGame.keys():
 							currentGame['description'] = gameData['description']
@@ -381,9 +383,97 @@ class toolWindow(QDialog):
 			jsonFile = open(f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json','w')
 			jsonFile.write(str(cloneJson))
 			jsonFile.close()
-			listLoadProgress.cancel()
+		listLoadProgress.cancel()
 		self.setCursor(Qt.CursorShape.ArrowCursor)
 		showMessage('Complete', f'Parents and clones from {fileName} were added to gamedb.json')
+		self.buttonStatus()
+
+	def loadAlternating(self, s):
+		altFileName = QFileDialog.getOpenFileName(
+			self,
+			"Load alternating games.xml",
+			scriptDir,
+			"XML File (*.xml)"
+		)
+		if not os.path.isfile(altFileName[0]):
+			return
+		conFileName = QFileDialog.getOpenFileName(
+			self,
+			"Load concurrent games.xml",
+			scriptDir,
+			"XML File (*.xml)"
+		)
+		if not os.path.isfile(conFileName[0]):
+			return
+		self.setCursor(Qt.CursorShape.WaitCursor)
+		self.update()
+		# Start loading
+		cloneFile = f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json'
+		cloneDB = {}
+		if os.path.isfile(cloneFile):
+			with open(cloneFile) as savedClones:
+				cloneDB = json.load(savedClones)
+		# Max isn't fully accurate, not all games support multiplayer. Will jump ahead at the end.
+		listLoadProgress = QProgressDialog('Loading Game Lists...', None, 0, len(cloneDB))
+		listLoadProgress.setMinimumDuration(0)
+		listLoadProgress.setWindowTitle('Loading from XML')
+		listLoadProgress.setWindowModality(Qt.WindowModality.WindowModal)
+		altDB = {}
+		conDB = []
+		# Get info for games with ALTERNATING players
+		if os.path.isfile(altFileName[0]):
+			altXMLFile = open(altFileName[0],'r')
+			altXML = xmltodict.parse(altXMLFile.read())
+			# Load relevant parts of game data from the xml into a json
+			for gameData in altXML['mame']['machine']:
+				print(f"Processing {gameData['@name']}")
+				if '@runnable' not in gameData.keys() or gameData['@runnable'] != 'no':
+					if '@cloneof' not in gameData.keys():
+						altDB[gameData['@name']] = gameData['@name']
+					else:
+						altDB[gameData['@name']] = gameData['@cloneof']
+		else:
+			return
+		# Get info for games with CONCURRENT players
+		if os.path.isfile(conFileName[0]):
+			conXMLFile = open(conFileName[0],'r')
+			conXML = xmltodict.parse(conXMLFile.read())
+			# Load relevant parts of game data from the xml into a json
+			for gameData in conXML['mame']['machine']:
+				print(f"Processing {gameData['@name']}")
+				if '@runnable' not in gameData.keys() or gameData['@runnable'] != 'no':
+					conDB.append(gameData['@name'])
+		else:
+			return
+		# Remove games that appear in BOTH lists, this will flag alternating-only games (generally a dip switch setting for play mode)
+		# Some alternating games have P2 controls for cocktail tables that are unused for upright
+		removeAlts = []
+		for game in altDB.keys():
+			if game in conDB:
+				removeAlts.append(game)
+		for game in removeAlts:
+			altDB.pop(game)
+		for game in altDB.keys():
+			if altDB[game] == game and game in cloneDB.keys():
+				cloneDB[game]['alternating'] = True
+			elif altDB[game] in cloneDB.keys():
+				if 'clones' not in cloneDB[altDB[game]].keys():
+					cloneDB[altDB[game]]['clones'] = {}
+				if game not in cloneDB[altDB[game]]['clones'].keys():
+					cloneDB[altDB[game]]['clones'][game] = {}
+				cloneDB[altDB[game]]['clones'][game]['alternating'] = True
+			listLoadProgress.setValue(listLoadProgress.value() + 1)
+			listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {listLoadProgress.maximum()} Complete')
+
+		cloneJson = json.dumps(cloneDB, indent=2)
+		if not os.path.isdir(f'{scriptDir}{os.path.sep}data{os.path.sep}'):
+			os.makedirs(f'{scriptDir}{os.path.sep}data{os.path.sep}')
+		jsonFile = open(f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json','w')
+		jsonFile.write(str(cloneJson))
+		jsonFile.close()
+		listLoadProgress.cancel()
+		self.setCursor(Qt.CursorShape.ArrowCursor)
+		showMessage('Complete', f'{len(altDB)} alternating play-only games set in gamedb.json')
 		self.buttonStatus()
 
 	def loadControls(self, s):
@@ -897,18 +987,21 @@ class toolWindow(QDialog):
 		portDB = os.path.isfile(f'{scriptDir}{os.path.sep}data{os.path.sep}portdb.json')
 		if not gameDB:
 			self.mappingButton.setEnabled(False)
+			self.alternatingButton.setEnabled(False)
 			self.controlButton.setEnabled(False)
 			self.portsButton.setEnabled(False)
 			self.validateButton.setEnabled(False)
 			self.mergeButton.setEnabled(False)
 		elif gameDB and controlDB and portDB:
 			self.mappingButton.setEnabled(True)
+			self.alternatingButton.setEnabled(True)
 			self.controlButton.setEnabled(True)
 			self.portsButton.setEnabled(True)
 			self.validateButton.setEnabled(True)
 			self.mergeButton.setEnabled(True)
 		else:
 			self.mappingButton.setEnabled(True)
+			self.alternatingButton.setEnabled(True)
 			self.controlButton.setEnabled(True)
 			self.portsButton.setEnabled(True)
 			self.validateButton.setEnabled(False)

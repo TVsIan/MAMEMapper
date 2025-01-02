@@ -85,6 +85,12 @@
     "friendlyname":"X"},
     "FACERIGHT": {
     "internalname":"BUTTON2",
-    "friendlyname":"B"}
+    "friendlyname":"B"},
+    "PEDAL2": {
+    "internalname":"RZAXIS_NEG_SWITCH",
+    "friendlyname":"LT"},
+    "PEDAL": {
+    "internalname":"RZAXIS_POS_SWITCH",
+    "friendlyname":"RT"}
   }
 }
