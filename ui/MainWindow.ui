@@ -499,7 +499,7 @@
        <property name="geometry">
         <rect>
          <x>380</x>
-         <y>80</y>
+         <y>100</y>
          <width>191</width>
          <height>17</height>
         </rect>
@@ -547,7 +547,7 @@
        <property name="geometry">
         <rect>
          <x>380</x>
-         <y>160</y>
+         <y>180</y>
          <width>181</width>
          <height>20</height>
         </rect>
@@ -560,7 +560,7 @@
        <property name="geometry">
         <rect>
          <x>380</x>
-         <y>180</y>
+         <y>200</y>
          <width>181</width>
          <height>20</height>
         </rect>
@@ -586,7 +586,7 @@
        <property name="geometry">
         <rect>
          <x>380</x>
-         <y>60</y>
+         <y>80</y>
          <width>181</width>
          <height>20</height>
         </rect>
@@ -599,7 +599,7 @@
        <property name="geometry">
         <rect>
          <x>380</x>
-         <y>120</y>
+         <y>140</y>
          <width>181</width>
          <height>20</height>
         </rect>
@@ -612,7 +612,7 @@
        <property name="geometry">
         <rect>
          <x>380</x>
-         <y>140</y>
+         <y>160</y>
          <width>181</width>
          <height>20</height>
         </rect>
@@ -641,7 +641,7 @@
        <property name="geometry">
         <rect>
          <x>380</x>
-         <y>200</y>
+         <y>220</y>
          <width>181</width>
          <height>17</height>
         </rect>
@@ -657,13 +657,29 @@
        <property name="geometry">
         <rect>
          <x>380</x>
-         <y>100</y>
+         <y>120</y>
          <width>181</width>
          <height>20</height>
         </rect>
        </property>
        <property name="text">
         <string>Use Neo Geo for 4-Button</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="altCheck">
+       <property name="geometry">
+        <rect>
+         <x>380</x>
+         <y>60</y>
+         <width>181</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>For games that alternate players, don't map the Player 2 controls (generally only used for cocktail tables).</string>
+       </property>
+       <property name="text">
+        <string>P1 Only on Alternating Games</string>
        </property>
       </widget>
      </widget>
@@ -1412,6 +1428,75 @@ Vector Displays</string>
    </widget>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>tabStrip</tabstop>
+  <tabstop>controllerType</tabstop>
+  <tabstop>loadButton</tabstop>
+  <tabstop>deleteButton</tabstop>
+  <tabstop>p1Check</tabstop>
+  <tabstop>p2Check</tabstop>
+  <tabstop>p3Check</tabstop>
+  <tabstop>p4Check</tabstop>
+  <tabstop>layoutRadio0</tabstop>
+  <tabstop>layoutRadio1</tabstop>
+  <tabstop>primaryCheck</tabstop>
+  <tabstop>singleCheck</tabstop>
+  <tabstop>mappingsList</tabstop>
+  <tabstop>leftRadio1</tabstop>
+  <tabstop>leftRadio2</tabstop>
+  <tabstop>leftRadio3</tabstop>
+  <tabstop>leftRadio4</tabstop>
+  <tabstop>rightRadio1</tabstop>
+  <tabstop>rightRadio2</tabstop>
+  <tabstop>rightRadio3</tabstop>
+  <tabstop>rightRadio4</tabstop>
+  <tabstop>cloneCheck</tabstop>
+  <tabstop>saveDefaultCheck</tabstop>
+  <tabstop>altCheck</tabstop>
+  <tabstop>hotkeyCheck</tabstop>
+  <tabstop>remap4pCheck</tabstop>
+  <tabstop>neogeoCheck</tabstop>
+  <tabstop>devButtonCheck</tabstop>
+  <tabstop>analogCheck</tabstop>
+  <tabstop>ctrlrCheck</tabstop>
+  <tabstop>iniCheck</tabstop>
+  <tabstop>mapDevicesCheck</tabstop>
+  <tabstop>searchLineEdit</tabstop>
+  <tabstop>searchButton</tabstop>
+  <tabstop>titleList</tabstop>
+  <tabstop>previewWidget</tabstop>
+  <tabstop>deviceWidget</tabstop>
+  <tabstop>getListButton</tabstop>
+  <tabstop>addJoyButton</tabstop>
+  <tabstop>addGunButton</tabstop>
+  <tabstop>addMouseButton</tabstop>
+  <tabstop>addKBButton</tabstop>
+  <tabstop>removeInputButton</tabstop>
+  <tabstop>fixedWidget</tabstop>
+  <tabstop>clearButton</tabstop>
+  <tabstop>videoCombo</tabstop>
+  <tabstop>bgfxCombo</tabstop>
+  <tabstop>chainsCombo</tabstop>
+  <tabstop>lcdChainsCombo</tabstop>
+  <tabstop>svgChainsCombo</tabstop>
+  <tabstop>fullScreenCheck</tabstop>
+  <tabstop>tripleBufferCheck</tabstop>
+  <tabstop>hlslCheck</tabstop>
+  <tabstop>mixedScreensCheck</tabstop>
+  <tabstop>cropArtCheck</tabstop>
+  <tabstop>horizontalEdit</tabstop>
+  <tabstop>horizontalButton</tabstop>
+  <tabstop>verticalEdit</tabstop>
+  <tabstop>verticalButton</tabstop>
+  <tabstop>autosaveCheck</tabstop>
+  <tabstop>rewindCheck</tabstop>
+  <tabstop>rewindBox</tabstop>
+  <tabstop>iniLoadButton</tabstop>
+  <tabstop>applyButton</tabstop>
+  <tabstop>mameButton</tabstop>
+  <tabstop>runButton</tabstop>
+  <tabstop>exitButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

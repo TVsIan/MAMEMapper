@@ -1,5 +1,6 @@
-﻿# MAMEMapper
-WIP readme file for v0.05
+﻿
+# MAMEMapper
+WIP readme file for v0.06
 
 ## What is it?
 
@@ -36,7 +37,7 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
 **Input Options:**
 
 **Physical Controller:** A controller that matches what you're using. This will be used to set the layout for each mapping as well as the button labels on the Preview tab. The default controllers can be used in most cases, but you may need to load a custom config in the case of arcade panels that don't use the default mapping or fightsticks with non-standard layouts. Default controllers are: *(WIP: Add labeled images with default button order)*
- - **XInput (Xbox Style):** standard XBox 360/One/[Series](https://www.xbox.com/en-US/accessories/controllers/xbox-wireless-controller). If you are using a program like DS4Windows to use your DS4/DualSense/Switch controller as XInput, select this one to get the proper button layout.
+ - **XInput (Xbox Style):** standard XBox 360/One/[Series](https://www.xbox.com/en-US/accessories/controllers/xbox-wireless-controller). If you are using a program like DS4Windows to use your DS4/DualSense/Switch controller as XInput, select this one to get the proper button layout. This will also auto-map Pedal 1 & 2 to RT and LT, respectively. Other profiles currently will not, this is the only one that supports analog triggers.
  - **DInput (Sony Style):** DualShock/[DualSense](https://www.playstation.com/en-us/accessories/dualsense-wireless-controller/). Sony controllers like to send both a button and axis when the analog triggers are pressed, this will use the button as input. In addition, it maps MAME button 11 to the touchpad click, though none of the game-specific mappings will use it.
  - **DInput (Switch Style, Bluetooth):** Nintendo Classic/[Pro](https://www.nintendo.com/us/store/products/pro-controller/)/Dual Joycon layout. This was generated with a Switch Pro controller connected via Bluetooth, as the USB connection only seems to work properly in Steam with Switch controller support enabled.
  - **6-Button (8BitDo M30 XInput):** Uses the layout for the [8BitDo M30 controller](https://download.8bitdo.com/Manual/Controller/M30/M30_Manual.pdf?20220513) when it is in XInput mode. Assumes a controller will have 6 face buttons + 2 shoulder buttons. Use this as a base if you're mapping other 6-button controllers with a set of shoulder buttons (ie a Saturn controller). The DPad is treated as a left analog stick.
@@ -98,6 +99,7 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
 
 **Parent ROMs Only:** Will only create configurations for parent ROMs, not clones. In most cases this is fine and the result will be cleaner, there may be some games where the clones have a different number of players or other changes that could affect their mappings.
 **Create Default Configs:** If turned on, configs will be created for games that have no special mappings, they only use the default configuration. Generally not needed.
+**P1 Only on Alternating Games:** Games that alternate players typically have one set of controls on an upright machine, and 2 sets on cocktail table machines. If on, this will not map the P2 controls. It's recommended to leave this on unless you're setting up a cocktail table machine.
 **Map Hotkeys (Coin + Button):** This will map hotkeys to use the Coin button plus another control to activate certain functions (modeled after Retropie/Batocera/Etc.). Note that buttons are based on their position on the controller itself, not other mappings that may apply. Examples will use the XBox names:
 
  - Back + Menu: Exit
@@ -116,7 +118,7 @@ Then when you want to run MAMEMapper, use `.\venv\Scripts\activate.bat` to activ
  **Move 3/1/2/4 for 3P/4P games:** If using a P3 - P1 - P2 - P4 control panel, this will swap controls for any game with 3 or 4 players to be in P1 - P2 - P3 - P4 order.
  **Use Neo Geo for 4-Button:** If Neo Geo is selected, this will apply the layout to any 4-button game that's not using an existing mapping (ie Tekken). Intended for 6 button or offset button control panels.
  **Map Mouse & Gun Buttons:** If selected, it will add Mouse and Gun button inputs to each button. In most cases, this should prevent lightgun or trackball games from needing to be remapped if using a mouse or gun. If you are exclusively using a keyboard or joystick controller, it is best to leave this unchecked.
- **Map Digital to Analog inputs:** By default, MAME will map the analog stick and mouse to various analog inputs (dial, trackball, lightgun, etc). This will also map the DPad to the "Increment/Decrement" option for each control. So for example, a trackball game could be controlled using a controller with no stick. The speed will be fixed on the movement as opposed to an analog control, so it's not ideal in most cases.
+ **Map Digital to Analog inputs:** By default, MAME will map the analog stick and mouse to various analog inputs (dial, trackball, lightgun, etc). This will also map whatever you have as the main stick to the "Increment/Decrement" option for each control. So for example, a trackball game could be controlled using a controller with no stick. The speed will be fixed on the movement as opposed to an analog control, so it's not ideal in most cases.
  **Make ctrlr file instead of cfgs:** Instead of creating separate cfg files for each game, this will create a single ctrlr file in the ctrlr folder. This can reduce file clutter as well as making it easier to swap controllers. It will also allow you to remap controls for specific games inside MAME without being overwritten if you run MAMEMapper again.
  **Add ctrlr to mame.ini:** Will add the created ctrlr file to the existing mame.ini so it loads automatically.
  **Use Fixed Device Order:** Allows you to use the Fixed Order tab to map Joystick, Lightgun, and Mouse controls in a specific order. Good to keep specific inputs on arcade cabinets etc.
@@ -173,101 +175,107 @@ The required files to create gamelist.json (the ones used for the current build 
  - **A MAME xml file.** The one used by default is generated by the Arcade64 fork, which leaves out consoles and other non-arcade machines. This prevents custom configs for those from being overwritten.
  - **controls.json.** Can be downloaded from [here](https://github.com/yo1dog/controls-dat-json), or a tool can be used to convert controls.dat to json yourself. The original controls.dat file has not been updated in a while, so many games will be missing control labels in the preview.
  - **csv files for each mapping.** You should have a .json in the /mappings folder, and a .csv in the /datasources folder with matching filenames - ie sf.json and sf.csv. The csv file should be a "Detailed (csv)" export from the [Arcade Database](http://adb.arcadeitalia.net/lista_mame.php). This can be pieced together from multiple exports, just make sure it includes all the games the mapping should apply to, and only those games.
+ - **alternating & concurrent mame xml files.** These can also be generated on the Arcade Database, in mame.xml format. One file should contain all games with alternating players, the other all games with concurrent players. This is used to tag games that ONLY have alternating players - some games have both due to different dip switch settings.
  - **Additional csv files (Optional):** If there are any machines missing from the xml, they can be added by importing them from a csv, in the same format as the mapping csvs. Any games not in the xml that are in the mapping csvs will be automatically added during the import process.
 
+![tools.py window](./images/tools.png)
+
 To create the file, run python tools.py. From there:
-1. **Load mame.xml File:** Select the file in mame.xml format to import.
-2. **Add Games & Clones from CSV:** Only if you have an additional game CSV file.
-3. **Add Controls from JSON:** Imports the controls.json file from /datasources
-4. **Add Mappings to Game List:** Scans the /mappings folder for jsons, and /datasources for matching csvs.
-5. **Merge Data Files:** Combines the temporary /data/controldb.json and /data/gamedb.json into the gamedata.json file.
+1. **Dump mame.xml from MAME:** (Optional) Dump the XML from any MAME .exe file if you don't have a pre-filtered one.
+2. **Load mame.xml File:** Select the file in mame.xml format to import and it will load games, clones, and game information.
+3. **Add Games & Clones from CSV:** (Optional) Adds games that may be missing from the xml for whatever reason. Do not store this file in /datasources, or it will cause problems with importing mappings.
+4. **Add Alternating XMLs:** First select the mame.xml containing *alternating* player games, then the one with *concurrent* player games. This will tag the imported games as needed.
+5. **Add Controls from JSON:** Imports the controls.json file.
+6. **Add Mappings to Game List:** Scans the /mappings folder for controller jsons, and /datasources for matching csvs. 
+7. **Dump ports from MAME:** Select the mame.exe you would like to use, and let it run. This is a long *(many hours)* process, it has to start every game that has been imported to dump the ports, so you also need a full romset - or at least enough for whatever games have been imported (ie arcade-only). It will save progress as it goes, so if you need to cancel, it will pick up where it left off. I recommend using a standard mame.exe for this, others like arcade64 may pop up a dialog box on error and pause the process until it is dismissed.
+8. **Validate Complete Data:** (Optional but Recommended) This will check to make sure nothing important is missing. It will also copy missing port data and control label data between clones and parents - this may not always be accurate depending on the machines. The console will show the total number of repaired and unrepairable entries. Missing ports will leave that control out of the database when merged, missing labels are mostly cosmetic, but will also affect the "Jump on 2" button swapping function.
+9. **Merge Data Files:** Combines gamedb.json, controldb.json, and portdb.json from the /data folder into the final gamedata.json file.
 
 **Mapping File Format:**
 The mapping files are all json-formatted data, containing button swaps for any control layouts that it applies to. One example is:
 
     {
-    	"longname":"Street Fighter",
-    	"shortname":"sf",
-    	"x360": {
-    		"BUTTON1":"BUTTON3",
-    		"BUTTON2":"BUTTON4",
-    		"BUTTON3":"BUTTON5",
-    		"BUTTON4":"BUTTON1",
-    		"BUTTON5":"BUTTON2"
-    	},
-    	"sony": {
-    		"BUTTON1":"BUTTON3",
-    		"BUTTON2":"BUTTON4",
-    		"BUTTON3":"BUTTON5",
-    		"BUTTON4":"BUTTON1",
-    		"BUTTON5":"BUTTON2"
-    	},
-    	"switch": {
-    		"BUTTON1":"BUTTON3",
-    		"BUTTON2":"BUTTON4",
-    		"BUTTON3":"BUTTON5",
-    		"BUTTON4":"BUTTON1",
-    		"BUTTON5":"BUTTON2"
-    	},
-    	"stick": {
-    		"BUTTON1":"BUTTON5",
-    		"BUTTON2":"BUTTON6",
-    		"BUTTON3":"BUTTON7",
-    		"BUTTON4":"BUTTON1",
-    		"BUTTON5":"BUTTON2",
-    		"BUTTON6":"BUTTON3"
-    	},
-    	"ipac4": {
-    		"BUTTON1":"BUTTON5",
-    		"BUTTON2":"BUTTON6",
-    		"BUTTON3":"BUTTON7",
-    		"BUTTON4":"BUTTON1",
-    		"BUTTON5":"BUTTON2",
-    		"BUTTON6":"BUTTON3"
-    	},
-    	"arcade6": {
-    		"BUTTON1":"BUTTON4",
-    		"BUTTON2":"BUTTON5",
-    		"BUTTON3":"BUTTON6",
-    		"BUTTON4":"BUTTON1",
-    		"BUTTON5":"BUTTON2",
-    		"BUTTON6":"BUTTON3"
-    	},
-    	"offset": {
-    		"BUTTON1":"BUTTON4",
-    		"BUTTON2":"BUTTON5",
-    		"BUTTON3":"BUTTON6",
-    		"BUTTON4":"BUTTON1",
-    		"BUTTON5":"BUTTON2",
-    		"BUTTON6":"BUTTON3"
-    	},
-    	"m30": {
-    		"BUTTON1":"BUTTON4",
-    		"BUTTON2":"BUTTON5",
-    		"BUTTON3":"BUTTON6",
-    		"BUTTON4":"BUTTON1",
-    		"BUTTON5":"BUTTON2",
-    		"BUTTON6":"BUTTON3"
-    	},
-    	"retro6": {
-    		"BUTTON1":"BUTTON4",
-    		"BUTTON2":"BUTTON5",
-    		"BUTTON3":"BUTTON6",
-    		"BUTTON4":"BUTTON1",
-    		"BUTTON5":"BUTTON2",
-    		"BUTTON6":"BUTTON3"
-    	}
+      "longname":"Street Fighter",
+      "shortname":"sf",
+      "x360": {
+        "BUTTON1":"BUTTON3",
+        "BUTTON2":"BUTTON4",
+        "BUTTON3":"BUTTON5",
+        "BUTTON4":"BUTTON1",
+        "BUTTON5":"BUTTON2"
+      },
+      "sony": {
+        "BUTTON1":"BUTTON3",
+        "BUTTON2":"BUTTON4",
+        "BUTTON3":"BUTTON5",
+        "BUTTON4":"BUTTON1",
+        "BUTTON5":"BUTTON2"
+      },
+      "switch": {
+        "BUTTON1":"BUTTON3",
+        "BUTTON2":"BUTTON4",
+        "BUTTON3":"BUTTON5",
+        "BUTTON4":"BUTTON1",
+        "BUTTON5":"BUTTON2"
+      },
+      "stick": {
+        "BUTTON1":"BUTTON5",
+        "BUTTON2":"BUTTON6",
+        "BUTTON3":"BUTTON7",
+        "BUTTON4":"BUTTON1",
+        "BUTTON5":"BUTTON2",
+        "BUTTON6":"BUTTON3"
+      },
+      "ipac4": {
+        "BUTTON1":"BUTTON5",
+        "BUTTON2":"BUTTON6",
+        "BUTTON3":"BUTTON7",
+        "BUTTON4":"BUTTON1",
+        "BUTTON5":"BUTTON2",
+        "BUTTON6":"BUTTON3"
+      },
+      "arcade6": {
+        "BUTTON1":"BUTTON4",
+        "BUTTON2":"BUTTON5",
+        "BUTTON3":"BUTTON6",
+        "BUTTON4":"BUTTON1",
+        "BUTTON5":"BUTTON2",
+        "BUTTON6":"BUTTON3"
+      },
+      "offset": {
+        "BUTTON1":"BUTTON4",
+        "BUTTON2":"BUTTON5",
+        "BUTTON3":"BUTTON6",
+        "BUTTON4":"BUTTON1",
+        "BUTTON5":"BUTTON2",
+        "BUTTON6":"BUTTON3"
+      },
+      "m30": {
+        "BUTTON1":"BUTTON4",
+        "BUTTON2":"BUTTON5",
+        "BUTTON3":"BUTTON6",
+        "BUTTON4":"BUTTON1",
+        "BUTTON5":"BUTTON2",
+        "BUTTON6":"BUTTON3"
+      },
+      "retro6": {
+        "BUTTON1":"BUTTON4",
+        "BUTTON2":"BUTTON5",
+        "BUTTON3":"BUTTON6",
+        "BUTTON4":"BUTTON1",
+        "BUTTON5":"BUTTON2",
+        "BUTTON6":"BUTTON3"
+      }
     }
 
-Each block is for a specific controller layout using it's short name (the filename, for default layouts, the one it was based on for custom controllers). Each pair of buttons is a swap for one of MAME's mappings - so for example `"BUTTON1":"BUTTON4"` would move MAME's Button 1 to the controller's Button 4 (as defined in the controller file). Each swap is processed independently, so order does not matter.
+Each block is for a specific controller layout using it's short name (the filename for default layouts, the one it was based on for custom controllers). Each pair of buttons is a swap for one of MAME's mappings - so for example `"BUTTON1":"BUTTON4"` would move MAME's Button 1 to the controller's Button 4 (as defined in the controller file). Each swap is processed independently, so order does not matter.
 It's also possible to define a mapping that only applies in SNES or NES mode. This is currently only used to apply the SNES layout to gamepad-like controllers when there is no other mapping used, but could be used for any mapping. The format would be:
 
     "x360-SNES": {
-    		"BUTTON1":"BUTTON3",
-    		"BUTTON2":"BUTTON1",
-    		"BUTTON3":"BUTTON2"
-    	}
+        "BUTTON1":"BUTTON3",
+        "BUTTON2":"BUTTON1",
+        "BUTTON3":"BUTTON2"
+      }
 Replace the SNES with NES to apply to that instead.
 
 > Written with [StackEdit](https://stackedit.io/).
-
