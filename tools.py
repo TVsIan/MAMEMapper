@@ -2,14 +2,21 @@ import sys
 import os
 import json
 import csv
-
+import subprocess
+import time
 import xmltodict
+from copy import deepcopy as deepcopy
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import Qt, QObject
 from PyQt6.QtWidgets import (
-	QApplication, QDialog, QMessageBox, QPushButton, QFileDialog, QGroupBox
+	QApplication, QDialog, QMessageBox, QPushButton, QFileDialog, QGroupBox, QProgressDialog
 )
 from PyQt6.uic import loadUi
+
+try:
+	from subprocess import DEVNULL
+except ImportError:
+	DEVNULL = open(os.devnull, 'wb')
 
 class toolWindow(QDialog):
 	def __init__(self):
@@ -20,6 +27,9 @@ class toolWindow(QDialog):
 		self.connectSignalsSlots()
 
 	def connectSignalsSlots(self):
+		# Connect button signals
+		self.dumpXMLButton = self.findChild(QPushButton, 'dumpXMLButton')
+		self.dumpXMLButton.clicked.connect(self.dumpMAMEXML)
 		self.xmlButton = self.findChild(QPushButton, 'xmlButton')
 		self.xmlButton.clicked.connect(self.loadXML)
 		self.cloneButton = self.findChild(QPushButton, 'cloneButton')
@@ -28,10 +38,43 @@ class toolWindow(QDialog):
 		self.controlButton.clicked.connect(self.loadControls)
 		self.mappingButton = self.findChild(QPushButton, 'mappingButton')
 		self.mappingButton.clicked.connect(self.addMappings)
+		self.portsButton = self.findChild(QPushButton, 'portsButton')
+		self.portsButton.clicked.connect(self.dumpPorts)
+		self.validateButton = self.findChild(QPushButton, 'validateButton')
+		self.validateButton.clicked.connect(self.validateData)
 		self.mergeButton = self.findChild(QPushButton, 'mergeButton')
 		self.mergeButton.clicked.connect(self.mergeData)
+		self.buttonStatus()
+
+	def dumpMAMEXML(self, s):
+		# Create a mame.xml file
+		# First select a mame.exe
+		fileName = QFileDialog.getOpenFileName(
+			self,
+			"Locate MAME",
+			scriptDir,
+			"Executable File (*.exe)"
+		)
+		if not os.path.isfile(fileName[0]):
+			showMessage('Error', 'You must select a MAME executable.', QMessageBox.Icon.Critical)
+			return
+		mameEXE = fileName[0]
+		mameDir = os.path.dirname(mameEXE)
+		dumpFile = f'{mameDir}{os.path.sep}mame.xml'
+		self.setCursor(Qt.CursorShape.WaitCursor)
+		self.update()
+		# Run the selected exe to dump the xml file to mame.xml in the same directory as the exe
+		with open(dumpFile, 'w') as xmlDump:
+			print(f'Dumping {mameEXE} to {dumpFile}...')
+			subprocess.run([mameEXE, '-listxml'], stdout=xmlDump)
+			print('Complete!')
+		self.setCursor(Qt.CursorShape.ArrowCursor)
+		showMessage('Complete', f'MAME game data dumped to {dumpFile}')
+		self.buttonStatus()
 
 	def loadXML(self, s):
+		# Load a mame.xml, create game list
+		# Select the xml, can be a full or filtered xml
 		fileName = QFileDialog.getOpenFileName(
 			self,
 			"Load mame.xml",
@@ -42,27 +85,35 @@ class toolWindow(QDialog):
 			return
 		self.setCursor(Qt.CursorShape.WaitCursor)
 		self.update()
+		# Start loading
 		cloneFile = f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json'
 		cloneDB = {}
+		# Max is temporary, will be overwritten once we know how many games are in the xml
+		listLoadProgress = QProgressDialog('Loading Game Lists...', None, 0, 100)
+		listLoadProgress.setMinimumDuration(0)
+		listLoadProgress.setWindowTitle('Loading from XML')
+		listLoadProgress.setWindowModality(Qt.WindowModality.WindowModal)
+		# Load existing game list if it exists - multiple mame.xmls can be merged in this way
 		if os.path.isfile(cloneFile):
 			with open(cloneFile) as savedClones:
 				cloneDB = json.load(savedClones)
 		if os.path.isfile(fileName[0]):
 			xmlFile = open(fileName[0],'r')
 			mameXML = xmltodict.parse(xmlFile.read())
+			listLoadProgress.setMaximum(len(mameXML['mame']['machine']) + 1)
+			# Load relevant parts of game data from the xml into a json
 			for gameData in mameXML['mame']['machine']:
 				print(f"Processing {gameData['@name']}")
 				if '@runnable' not in gameData.keys() or gameData['@runnable'] != 'no':
-					if '@cloneof' not in gameData.keys():
-						if gameData['@name'] not in cloneDB.keys():
-							print(f"Adding {gameData['@name']} to parent list.")
-							cloneDB[gameData['@name']] = {}
-						if 'description' not in cloneDB[gameData['@name']].keys():
-							cloneDB[gameData['@name']]['description'] = gameData['description']
+					if '@cloneof' not in gameData.keys():						
+						currentGame = {}
+						if 'description' not in currentGame.keys():
+							currentGame['description'] = gameData['description']
 							print(f"Adding description {gameData['description']}")
-						if 'playercount' not in cloneDB[gameData['@name']].keys():
-							cloneDB[gameData['@name']]['playercount'] = gameData['input']['@players']
+						if 'playercount' not in currentGame.keys():
+							currentGame['playercount'] = gameData['input']['@players']
 							print(f"Adding player count {gameData['input']['@players']}")
+						# Checking controls, this will show icons in the MAMEMapper game list
 						if 'control' in gameData['input'].keys():
 							stickCount = 0
 							pedalCount = 0
@@ -117,139 +168,160 @@ class toolWindow(QDialog):
 									keyboardCount += 1
 								case _:
 									print(f"Unhandled control type: {controlData['@type']}")
-									cloneDB[gameData['@name']]['unknown'] = '1'
+									currentGame['unknown'] = '1'
 							if buttonCount > 0:
-								cloneDB[gameData['@name']]['buttons'] = str(buttonCount)
+								currentGame['buttons'] = str(buttonCount)
 							if stickCount > 0:
-								cloneDB[gameData['@name']]['sticks'] = str(stickCount)
+								currentGame['sticks'] = str(stickCount)
 							if paddleCount > 0:
-								cloneDB[gameData['@name']]['paddles'] = str(paddleCount)
+								currentGame['paddles'] = str(paddleCount)
 							if dialCount > 0:
-								cloneDB[gameData['@name']]['dials'] = str(dialCount)
+								currentGame['dials'] = str(dialCount)
 							if pedalCount > 0:
-								cloneDB[gameData['@name']]['pedals'] = str(pedalCount)
+								currentGame['pedals'] = str(pedalCount)
 							if trackballCount > 0:
-								cloneDB[gameData['@name']]['trackball'] = str(trackballCount)
+								currentGame['trackball'] = str(trackballCount)
 							if gunCount > 0:
-								cloneDB[gameData['@name']]['lightgun'] = str(gunCount)
+								currentGame['lightgun'] = str(gunCount)
 							if mouseCount > 0:
-								cloneDB[gameData['@name']]['mouse'] = str(mouseCount)
+								currentGame['mouse'] = str(mouseCount)
 							if mjCount > 0:
-								cloneDB[gameData['@name']]['mahjong'] = str(mjCount)
+								currentGame['mahjong'] = str(mjCount)
 							if gamblingCount > 0:
-								cloneDB[gameData['@name']]['gambling'] = str(gamblingCount)
+								currentGame['gambling'] = str(gamblingCount)
 							if hanafudaCount > 0:
-								cloneDB[gameData['@name']]['hanafuda'] = str(hanafudaCount)
+								currentGame['hanafuda'] = str(hanafudaCount)
 							if keyboardCount > 0:
-								cloneDB[gameData['@name']]['keyboard'] = str(keyboardCount)
+								currentGame['keyboard'] = str(keyboardCount)
 						else:
 							print(f"Controls not found for {gameData['@name']}, keys are: {gameData['input'].keys()}")
-							cloneDB[gameData['@name']]['unknown'] = '1'
+							currentGame['unknown'] = '1'
+						# If it's new, add it. If it already exists, update data
+						if gameData['@name'] not in cloneDB.keys():
+							print(f"Adding {gameData['@name']} to parent list.")
+							cloneDB[gameData['@name']] = currentGame
+						else:
+							cloneDB[gameData['@name']].update(currentGame)
 					else:
+						# Game is tagged as a clone, similar routine
+						currentClone = {}
+						if 'description' not in currentClone.keys():
+							currentClone['description'] = gameData['description']
+						if 'playercount' not in currentClone.keys():
+							currentClone['playercount'] = gameData['input']['@players']
+						if 'control' in gameData['input'].keys():
+							stickCount = 0
+							pedalCount = 0
+							paddleCount = 0
+							dialCount = 0
+							trackballCount = 0
+							gunCount = 0
+							mouseCount = 0
+							mjCount = 0
+							gamblingCount = 0
+							hanafudaCount = 0
+							keyboardCount = 0
+							buttonCount = 0
+							controlType = ''
+							if type(gameData['input']['control']) == dict:
+								if int(getIfExists(gameData['input']['control'], '@player', 1)) == 1:
+									controlType = getIfExists(gameData['input']['control'], '@type', 'unknown')
+									if int(getIfExists(gameData['input']['control'], '@buttons', 0)) > buttonCount:
+										buttonCount = int(getIfExists(gameData['input']['control'], '@buttons', 0))
+							elif type(gameData['input']['control']) == list:
+								for controlData in gameData['input']['control']:
+									if int(getIfExists(controlData, '@player', 1)) == 1:
+										controlType = getIfExists(controlData, '@type')
+										if int(getIfExists(controlData, '@buttons', 0)) > buttonCount:
+											buttonCount = int(getIfExists(controlData, '@buttons', 0))
+							match controlType:
+								case 'only_buttons':
+									stickCount = 0
+								case 'joy' | 'stick':
+									stickCount += 1
+								case 'doublejoy':
+									stickCount += 2
+								case 'pedal':
+									pedalCount =+ 1
+								case 'paddle':
+									paddleCount =+ 1
+								case 'dial':
+									dialCount =+ 1
+								case 'trackball':
+									trackballCount += 1
+								case 'lightgun':
+									gunCount += 1
+								case 'positional' | 'mouse':
+									mouseCount += 1
+								case 'mahjong':
+									mjCount += 1
+								case 'gambling':
+									gamblingCount += 1
+								case 'hanafuda':
+									hanafudaCount += 1
+								case 'keyboard' | 'keypad':
+									keyboardCount += 1
+								case _:
+									print(f"Unhandled control type: {controlData['@type']}")
+									currentClone['unknown'] = '1'
+							if buttonCount > 0:
+								currentClone['buttons'] = str(buttonCount)
+							if stickCount > 0:
+								currentClone['sticks'] = str(stickCount)
+							if paddleCount > 0:
+								currentClone['paddles'] = str(paddleCount)
+							if dialCount > 0:
+								currentClone['dials'] = str(dialCount)
+							if pedalCount > 0:
+								currentClone['pedals'] = str(pedalCount)
+							if trackballCount > 0:
+								currentClone['trackball'] = str(trackballCount)
+							if gunCount > 0:
+								currentClone['lightgun'] = str(gunCount)
+							if mouseCount > 0:
+								currentClone['mouse'] = str(mouseCount)
+							if mjCount > 0:
+								currentClone['mahjong'] = str(mjCount)
+							if gamblingCount > 0:
+								currentClone['gambling'] = str(gamblingCount)
+							if hanafudaCount > 0:
+								currentClone['hanafuda'] = str(hanafudaCount)
+							if keyboardCount > 0:
+								currentClone['keyboard'] = str(keyboardCount)
+						else:
+							print(f"Controls not found for {gameData['@name']}, keys are: {gameData['input'].keys()}")
+							currentClone['unknown'] = '1'
+						# If the parent game hasn't already been loaded, add a blank placeholder
 						if gameData['@cloneof'] not in cloneDB.keys():
 							print(f"Clone loaded before parent: Adding {gameData['@cloneof']} to parent list.")
 							cloneDB[gameData['@cloneof']] = {}
-						if gameData['@name'] not in cloneDB[gameData['@cloneof']].keys():
+						# Add a tag for the list of clones & their data
+						if 'clones' not in cloneDB[gameData['@cloneof']].keys():
+							cloneDB[gameData['@cloneof']]['clones'] = {}
+						# Finally add or update the clone's entry
+						if gameData['@name'] not in cloneDB[gameData['@cloneof']]['clones'].keys():
 							print(f"Adding {gameData['@name']} as a clone of {gameData['@cloneof']}.")
-							cloneDB[gameData['@cloneof']][gameData['@name']] = {}
-						if 'description' not in cloneDB[gameData['@cloneof']][gameData['@name']].keys():
-							cloneDB[gameData['@cloneof']][gameData['@name']]['description'] = gameData['description']
-						if 'playercount' not in cloneDB[gameData['@cloneof']][gameData['@name']].keys():
-							cloneDB[gameData['@cloneof']][gameData['@name']]['playercount'] = gameData['input']['@players']
-						if 'control' in gameData['input'].keys():
-							stickCount = 0
-							pedalCount = 0
-							paddleCount = 0
-							dialCount = 0
-							trackballCount = 0
-							gunCount = 0
-							mouseCount = 0
-							mjCount = 0
-							gamblingCount = 0
-							hanafudaCount = 0
-							keyboardCount = 0
-							buttonCount = 0
-							controlType = ''
-							if type(gameData['input']['control']) == dict:
-								if int(getIfExists(gameData['input']['control'], '@player', 1)) == 1:
-									controlType = getIfExists(gameData['input']['control'], '@type', 'unknown')
-									if int(getIfExists(gameData['input']['control'], '@buttons', 0)) > buttonCount:
-										buttonCount = int(getIfExists(gameData['input']['control'], '@buttons', 0))
-							elif type(gameData['input']['control']) == list:
-								for controlData in gameData['input']['control']:
-									if int(getIfExists(controlData, '@player', 1)) == 1:
-										controlType = getIfExists(controlData, '@type')
-										if int(getIfExists(controlData, '@buttons', 0)) > buttonCount:
-											buttonCount = int(getIfExists(controlData, '@buttons', 0))
-							match controlType:
-								case 'only_buttons':
-									stickCount = 0
-								case 'joy' | 'stick':
-									stickCount += 1
-								case 'doublejoy':
-									stickCount += 2
-								case 'pedal':
-									pedalCount =+ 1
-								case 'paddle':
-									paddleCount =+ 1
-								case 'dial':
-									dialCount =+ 1
-								case 'trackball':
-									trackballCount += 1
-								case 'lightgun':
-									gunCount += 1
-								case 'positional' | 'mouse':
-									mouseCount += 1
-								case 'mahjong':
-									mjCount += 1
-								case 'gambling':
-									gamblingCount += 1
-								case 'hanafuda':
-									hanafudaCount += 1
-								case 'keyboard' | 'keypad':
-									keyboardCount += 1
-								case _:
-									print(f"Unhandled control type: {controlData['@type']}")
-									cloneDB[gameData['@cloneof']][gameData['@name']]['unknown'] = '1'
-							if buttonCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['buttons'] = str(buttonCount)
-							if stickCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['sticks'] = str(stickCount)
-							if paddleCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['paddles'] = str(paddleCount)
-							if dialCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['dials'] = str(dialCount)
-							if pedalCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['pedals'] = str(pedalCount)
-							if trackballCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['trackball'] = str(trackballCount)
-							if gunCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['lightgun'] = str(gunCount)
-							if mouseCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['mouse'] = str(mouseCount)
-							if mjCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['mahjong'] = str(mjCount)
-							if gamblingCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['gambling'] = str(gamblingCount)
-							if hanafudaCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['hanafuda'] = str(hanafudaCount)
-							if keyboardCount > 0:
-								cloneDB[gameData['@cloneof']][gameData['@name']]['keyboard'] = str(keyboardCount)
+							cloneDB[gameData['@cloneof']]['clones'][gameData['@name']] = currentClone
 						else:
-							print(f"Controls not found for {gameData['@name']}, keys are: {gameData['input'].keys()}")
-							cloneDB[gameData['@cloneof']][gameData['@name']]['unknown'] = '1'
+							cloneDB[gameData['@cloneof']]['clones'][gameData['@name']].update(currentClone)
 				else:
 					print("Not runnable!")
+				listLoadProgress.setValue(listLoadProgress.value() + 1)
+				listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {listLoadProgress.maximum()} Complete')
+			# Save to file
 			cloneJson = json.dumps(cloneDB, indent=2)
 			if not os.path.isdir(f'{scriptDir}{os.path.sep}data{os.path.sep}'):
 				os.makedirs(f'{scriptDir}{os.path.sep}data{os.path.sep}')
 			jsonFile = open(f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json','w')
 			jsonFile.write(str(cloneJson))
 			jsonFile.close()
+			listLoadProgress.cancel()
 		self.setCursor(Qt.CursorShape.ArrowCursor)
 		showMessage('Complete', f'Parents and clones from {fileName} were added to gamedb.json')
+		self.buttonStatus()
 
 	def loadClones(self, s):
+		# Load from a csv file, this can be instead of or in addition to the mame.xml, data will not be complete
 		fileName = QFileDialog.getOpenFileName(
 			self,
 			"Load Arcade-Italia csv export",
@@ -266,6 +338,12 @@ class toolWindow(QDialog):
 			with open(cloneFile) as savedClones:
 				cloneDB = json.load(savedClones)
 		if os.path.isfile(fileName[0]):
+			with open(fileName[0], "rb") as file:
+				lineCount = sum(1 for _ in file)
+			listLoadProgress = QProgressDialog(f'0 / {lineCount} Complete', None, 0, lineCount)
+			listLoadProgress.setMinimumDuration(0)
+			listLoadProgress.setWindowTitle('Loading from csv')
+			listLoadProgress.setWindowModality(Qt.WindowModality.WindowModal)
 			with open(fileName[0]) as dataFile:
 				dataReader = csv.DictReader(dataFile, delimiter=';')
 				for dataRow in dataReader:
@@ -279,29 +357,37 @@ class toolWindow(QDialog):
 						else:
 							if dataRow['cloneof'] not in cloneDB.keys():
 								cloneDB[dataRow['cloneof']] = {}
+								cloneDB[dataRow['cloneof']]['clones'] = {}
 								print(f"Adding {dataRow['cloneof']} to parent list.")
-							elif dataRow['name'] not in cloneDB[dataRow['cloneof']].keys():
+							if 'clones' not in cloneDB[dataRow['cloneof']].keys():
+								cloneDB[dataRow['cloneof']]['clones'] = {}
+							if dataRow['name'] not in cloneDB[dataRow['cloneof']]['clones'].keys():
 								print(f"Adding {dataRow['name']} to clone list for {dataRow['cloneof']}.")
-								cloneDB[dataRow['cloneof']][dataRow['name']] = {}
-								cloneDB[dataRow['cloneof']][dataRow['name']]['description'] = dataRow['description']
+								cloneDB[dataRow['cloneof']]['clones'][dataRow['name']] = {}
+								cloneDB[dataRow['cloneof']]['clones'][dataRow['name']]['description'] = dataRow['description']
 								if 'players' in dataRow.keys():
-									cloneDB[dataRow['cloneof']][dataRow['name']]['playercount'] = dataRow['players']
+									cloneDB[dataRow['cloneof']]['clones'][dataRow['name']]['playercount'] = dataRow['players']
 								else:
-									cloneDB[dataRow['cloneof']][dataRow['name']]['playercount'] = cloneDB[dataRow['cloneof']]['playercount']
+									cloneDB[dataRow['cloneof']]['clones'][dataRow['name']]['playercount'] = cloneDB[dataRow['cloneof']]['playercount']
 								if 'buttons' in dataRow.keys():
-									cloneDB[dataRow['cloneof']][dataRow['name']]['playercount'] = dataRow['buttons']
+									cloneDB[dataRow['cloneof']]['clones'][dataRow['name']]['playercount'] = dataRow['buttons']
 								else:
-									cloneDB[dataRow['cloneof']][dataRow['name']]['buttoncount'] = cloneDB[dataRow['cloneof']]['buttoncount']
+									cloneDB[dataRow['cloneof']]['clones'][dataRow['name']]['buttoncount'] = cloneDB[dataRow['cloneof']]['buttoncount']
+				listLoadProgress.setValue(listLoadProgress.value() + 1)
+				listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {listLoadProgress.maximum()} Complete')
 			cloneJson = json.dumps(cloneDB, indent=2)
 			if not os.path.isdir(f'{scriptDir}{os.path.sep}data{os.path.sep}'):
 				os.makedirs(f'{scriptDir}{os.path.sep}data{os.path.sep}')
 			jsonFile = open(f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json','w')
 			jsonFile.write(str(cloneJson))
 			jsonFile.close()
+			listLoadProgress.cancel()
 		self.setCursor(Qt.CursorShape.ArrowCursor)
 		showMessage('Complete', f'Parents and clones from {fileName} were added to gamedb.json')
+		self.buttonStatus()
 
 	def loadControls(self, s):
+		# Load controls.json - this is just control labels, it is used for the jump button standardization
 		cloneFile = f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json'
 		cloneDB = {}
 		controlDB = {}
@@ -322,33 +408,38 @@ class toolWindow(QDialog):
 			cloneDB = json.load(savedClones)
 		with open(fileName[0], 'r') as controlFile:
 			controlData = json.load(controlFile)
+		listLoadProgress = QProgressDialog(f'0 / {len(controlData['games'])} Complete', None, 0, len(controlData['games']))
+		listLoadProgress.setMinimumDuration(0)
+		listLoadProgress.setWindowTitle('Loading from controls.json')
+		listLoadProgress.setWindowModality(Qt.WindowModality.WindowModal)
 		for gameData in controlData['games']:
-			controlDB[gameData['romname']] = {}
+			currentGame = gameData['romname']
+			controlDB[currentGame] = {}
 			for playerData in gameData['players']:
 				for labelData in playerData['labels']:
-					controlDB[gameData['romname']][labelData['name'].replace('_JOYSTICK_', '_')] = labelData['value']
-			if gameData['romname'] not in cloneDB.keys():
-				foundClone = recursiveFind(cloneDB, gameData['romname'])
+					controlDB[currentGame][labelData['name'].replace('_JOYSTICK_', '_')] = labelData['value']
+			if currentGame not in cloneDB.keys():
+				foundClone = recursiveFind(cloneDB, currentGame)
 				if foundClone == None:
 					foundGame = False
-					for parentData in cloneDB:
+					for parentData in cloneDB.keys():
 						if foundGame:
 							break
-						if cloneDB[parentData]['description'] == gameData['gamename']:
-							print(f"Found {gameData['romname']} as {gameData['gamename']}")
-							controlDB[parentData] = controlDB.pop(gameData['romname'])
+						if cloneDB[parentData]['description'] == currentGame:
+							print(f"Found {currentGame} as {gameData['gamename']}")
+							controlDB[parentData] = controlDB.pop(currentGame)
+							currentGame = parentData
 							foundGame = True
 							break
 						else:
-							for cloneData in cloneDB[parentData].keys():
-								if cloneData not in ['description', 'playercount', 'buttons', 'sticks', 'pedals', 'dials', 'paddles', 'trackball', \
-									'lightgun', 'mouse', 'mahjong', 'gambling', 'hanafuda', 'keyboard', 'mappings', 'unknown']:
-									print(f'Looking for {cloneData} in tags.')
-									if cloneDB[parentData][cloneData]['description'] == gameData['gamename']:
+							if 'clones' in cloneDB[parentData].keys():
+								for cloneData in cloneDB[parentData]['clones'].keys():
+									if cloneDB[parentData]['clones'][cloneData]['description'] == gameData['gamename']:
 										foundClone = cloneData
 										parent = breadcrumb(cloneDB, foundClone)[0]
 										print(f"Found {gameData['romname']} as a clone of {parent}, reassigning controls to parent.")
 										controlDB[parent] = controlDB.pop(gameData['romname'])
+										currentGame = parent
 										foundGame = True
 										break
 					if not foundGame:
@@ -359,7 +450,22 @@ class toolWindow(QDialog):
 					parent = breadcrumb(cloneDB, foundClone)[0]
 					print(f"Found {gameData['romname']} as a clone of {parent}, reassigning controls to parent.")
 					controlDB[parent] = controlDB.pop(gameData['romname'])
-					controlDB[gameData['gamename']] = controlDB.pop(parent)
+					currentGame = parent
+			removeExts = {}
+			for control in controlDB[currentGame].keys():
+				if '_EXT' in control:
+					if control[:-4] in controlDB[currentGame].keys():
+						controlDB[currentGame][control[:-4]] = f'{controlDB[currentGame][control[:-4]]}/{controlDB[currentGame][control]}'
+						if currentGame not in removeExts.keys():
+							removeExts[currentGame] = []
+						removeExts[currentGame].append(control)
+					controlDB[currentGame][control] = controlDB[currentGame][control].title()
+			if len(removeExts) > 0:
+				for game in removeExts.keys():
+					for control in removeExts[game]:
+						controlDB[game].pop(control)
+			listLoadProgress.setValue(listLoadProgress.value() + 1)
+			listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {listLoadProgress.maximum()} Complete')
 		controlJson = json.dumps(controlDB, indent=2)
 		jsonFile = open(f'{scriptDir}{os.path.sep}data{os.path.sep}controldb.json','w')
 		jsonFile.write(str(controlJson))
@@ -369,9 +475,13 @@ class toolWindow(QDialog):
 		jsonFile.write(str(cloneJson))
 		jsonFile.close()
 		self.setCursor(Qt.CursorShape.ArrowCursor)
+		listLoadProgress.cancel()
 		showMessage('Complete', f'Control data from {fileName} was converted to controldb.xml')
+		self.buttonStatus()
 
 	def addMappings(self, s):
+		# Loads the list of custom mapping files.
+		# Reads the json files that determine the final buttom mapping, loads a matching csv file from the datasources folder, and creates lists of applicable mappings.
 		cloneFile = f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json'
 		mappingDir = f'{scriptDir}{os.path.sep}mappings{os.path.sep}'
 		csvDir = f'{scriptDir}{os.path.sep}datasources{os.path.sep}'
@@ -391,6 +501,10 @@ class toolWindow(QDialog):
 		with open(cloneFile) as savedClones:
 			cloneDB = json.load(savedClones)
 			mappingTypes = {}
+		listLoadProgress = QProgressDialog(f'0 / {len(os.listdir(mappingDir))} Complete', None, 0, len(os.listdir(mappingDir)))
+		listLoadProgress.setMinimumDuration(0)
+		listLoadProgress.setWindowTitle('Loading mapping definitions from jsons')
+		listLoadProgress.setWindowModality(Qt.WindowModality.WindowModal)
 		for mappingFile in os.listdir(mappingDir):
 			fullPath = os.path.join(mappingDir, mappingFile)
 			if os.path.splitext(fullPath)[1] == '.json':
@@ -419,19 +533,17 @@ class toolWindow(QDialog):
 											if dataRow['cloneof'] not in cloneDB.keys():
 												cloneDB[dataRow['cloneof']] = {}
 												print(f"Adding {dataRow['cloneof']} to parent list.")
-											if dataRow['name'] not in cloneDB[dataRow['cloneof']].keys():
+											if dataRow['name'] not in cloneDB[dataRow['cloneof']]['clones'].keys():
 												print(f"Adding {dataRow['name']} to clone list for {dataRow['cloneof']}.")
-												cloneDB[dataRow['cloneof']][dataRow['name']] = {}
-											if 'description' not in cloneDB[dataRow['cloneof']][dataRow['name']].keys():
-												cloneDB[dataRow['cloneof']][dataRow['name']]['description'] = dataRow['description']
-											if dataRow['name'] not in cloneDB[dataRow['cloneof']].keys():
-												showMessage('Error', f"{dataRow['cloneof']}/{dataRow['name']} is not in the game list, please add a csv that contains it.", QMessageBox.Icon.Critical)
-												self.setCursor(Qt.CursorShape.ArrowCursor)
-												return
-											if 'mappings' not in cloneDB[dataRow['cloneof']][dataRow['name']].keys():
-												cloneDB[dataRow['cloneof']][dataRow['name']]['mappings'] = []
-											if mappingJson['shortname'] not in cloneDB[dataRow['cloneof']][dataRow['name']]['mappings']:
-												cloneDB[dataRow['cloneof']][dataRow['name']]['mappings'].append(mappingJson['shortname'])
+												cloneDB[dataRow['cloneof']]['clone'][dataRow['name']] = {}
+											if 'description' not in cloneDB[dataRow['cloneof']]['clones'][dataRow['name']].keys():
+												cloneDB[dataRow['cloneof']][dataRow['name']]['clones']['description'] = dataRow['description']
+											if 'mappings' not in cloneDB[dataRow['cloneof']]['clones'][dataRow['name']].keys():
+												cloneDB[dataRow['cloneof']][dataRow['name']]['clones']['mappings'] = []
+											if mappingJson['shortname'] not in cloneDB[dataRow['cloneof']]['clones'][dataRow['name']]['mappings']:
+												cloneDB[dataRow['cloneof']]['clones'][dataRow['name']]['mappings'].append(mappingJson['shortname'])
+			listLoadProgress.setValue(listLoadProgress.value() + 1)
+			listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {listLoadProgress.maximum()} Complete')
 		cloneJson = json.dumps(cloneDB, indent=2)
 		if not os.path.isdir(f'{scriptDir}{os.path.sep}data{os.path.sep}'):
 			os.makedirs(f'{scriptDir}{os.path.sep}data{os.path.sep}')
@@ -440,10 +552,203 @@ class toolWindow(QDialog):
 		jsonFile.close()
 		self.setCursor(Qt.CursorShape.ArrowCursor)
 		showMessage('Complete', f'Mappings for parents and clones were added to gamedb.json')
+		self.buttonStatus()
+
+	def dumpPorts(self, s):
+		fileName = QFileDialog.getOpenFileName(
+			self,
+			"Locate MAME",
+			scriptDir,
+			"Executable File (*.exe)"
+		)
+		if not os.path.isfile(fileName[0]):
+			showMessage('Error', 'You must select a MAME executable.', QMessageBox.Icon.Critical)
+			return
+		mameEXE = fileName[0]
+		mameDir = os.path.dirname(mameEXE)
+		dumpScript = f'{scriptDir}{os.path.sep}datasources{os.path.sep}portdumper.lua'
+		dumpedAlready = f'{scriptDir}{os.path.sep}data{os.path.sep}portdb.json'
+		dumpFile = f'{mameDir}{os.path.sep}ports.json'
+		cloneFile = f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json'
+		dumpLog = f'{scriptDir}{os.path.sep}dump.log'
+		portDB = {}
+		cloneDB = {}
+		if not os.path.isfile(cloneFile):
+			showMessage('Error', 'gamedb.json does not exist, please load games first.', QMessageBox.Icon.Critical)
+			return
+		self.setCursor(Qt.CursorShape.WaitCursor)
+		self.update()
+		with open(cloneFile) as savedClones:
+			cloneDB = json.load(savedClones)
+		if os.path.isfile(dumpedAlready):
+			with open(dumpedAlready) as dumpedPorts:
+				print(f'Loading {dumpedAlready}...')
+				portDB = json.load(dumpedPorts)
+		dumpSize = len(cloneDB) + cloneCount(cloneDB) - len(portDB)
+		listLoadProgress = QProgressDialog(f'0 / {dumpSize} Complete', 'Cancel & Save Progress', 0, dumpSize + 1)
+		print(f'Total to dump: {dumpSize}: {len(cloneDB)} Parents, {cloneCount(cloneDB)} Clones, {len(portDB)} already dumped.')
+		listLoadProgress.setMinimumDuration(0)
+		listLoadProgress.setWindowModality(Qt.WindowModality.WindowModal)
+		listLoadProgress.setWindowTitle('Dumping Progress')
+		listLoadProgress.forceShow()
+		os.chdir(mameDir)
+		for system in cloneDB.keys():
+			if system not in portDB.keys():
+				print(f'Preparing to dump {system}...')
+				if os.path.isfile(dumpFile):
+					os.remove(dumpFile)
+				args = [mameEXE, system, '-autoboot_script', dumpScript, '-window', '-nomaximize', '-str', '120']
+				subprocess.call(args, stdout=DEVNULL)
+				if os.path.isfile(dumpFile):
+					latestPort = {}
+					with open(dumpFile) as lastDump:
+						latestPort = json.load(lastDump)
+					if system in latestPort.keys():
+						portDB[system] = latestPort[system]
+						with open(dumpedAlready, 'w') as dumpedPorts:
+							dumpedPorts.write(str(json.dumps(portDB, indent=2)))
+							print(f'Ports for {system} saved.')
+					else:
+						with open(dumpLog, "a") as logFile:
+							logFile.write(f'Unable to dump {system} (not found in file)')
+							print(f'Unable to dump {system} (not found in file)')
+				else:
+					with open(dumpLog, "a") as logFile:
+						logFile.write(f'Unable to dump {system} (no dump file)')
+						print(f'Unable to dump {system} (no dump file)')
+				listLoadProgress.setValue(listLoadProgress.value() + 1)
+				listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {dumpSize} Complete')
+			if 'clones' in cloneDB[system].keys():
+				for clone in cloneDB[system]['clones'].keys():
+					if clone not in portDB.keys():
+						if os.path.isfile(dumpFile):
+							os.remove(dumpFile)
+						if clone not in ['description', 'playercount', 'buttons', 'sticks', 'pedals', 'dials', 'paddles', 'trackball', \
+							'lightgun', 'mouse', 'mahjong', 'gambling', 'hanafuda', 'keyboard', 'mappings', 'unknown', 'controls']:
+							print(f'Preparing to dump {clone}...')
+							if os.path.isfile(dumpFile):
+								os.remove(dumpFile)
+							args = [mameEXE, clone, '-autoboot_script', dumpScript, '-window', '-nomaximize', '-str', '120']
+							subprocess.call(args, stdout=DEVNULL)
+							if os.path.isfile(dumpFile):
+								latestPort = {}
+								with open(dumpFile) as lastDump:
+									latestPort = json.load(lastDump)
+								if clone in latestPort.keys():
+									portDB[clone] = latestPort[clone]
+									with open(dumpedAlready, 'w') as dumpedPorts:
+										dumpedPorts.write(str(json.dumps(portDB, indent=2)))
+										print(f'Ports for {clone} saved.')
+								else:
+									with open(dumpLog, "a") as logFile:
+										logFile.write(f'Unable to dump {clone} (not found in file)')
+										print(f'Unable to dump {clone} (not found in file)')
+							else:
+								with open(dumpLog, "a") as logFile:
+									logFile.write(f'Unable to dump {clone} (no dump file')
+									print(f'Unable to dump {clone} (no dump file')
+						listLoadProgress.setValue(listLoadProgress.value() + 1)
+						listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {dumpSize} Complete')
+			# Brief delay to allow the cancel button to work, it is nonresponsive during the MAME process.
+			loopTime = time.perf_counter_ns() + 2500
+			while time.perf_counter_ns() < loopTime:
+				app.processEvents()
+				if listLoadProgress.wasCanceled():
+					os.chdir(scriptDir)
+					self.setCursor(Qt.CursorShape.ArrowCursor)
+					showMessage('Cancelled', f'Partial ports were dumped to portdb.json.')
+					self.buttonStatus()
+					return
+		os.chdir(scriptDir)
+		self.setCursor(Qt.CursorShape.ArrowCursor)
+		listLoadProgress.cancel()
+		showMessage('Complete', f'Ports were dumped to portdb.json.')
+		self.buttonStatus()
+
+	def validateData(self, s):
+		cloneFile = f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json'
+		controlFile = f'{scriptDir}{os.path.sep}data{os.path.sep}controldb.json'
+		portsFile = f'{scriptDir}{os.path.sep}data{os.path.sep}portdb.json'
+		cloneDB = {}
+		controlDB = {}
+		portDB = {}
+		if not os.path.isfile(cloneFile):
+			showMessage('Error', 'gamedb.json does not exist, please load games first.', QMessageBox.Icon.Critical)
+			return
+		if not os.path.isfile(controlFile):
+			showMessage('Error', 'controldb.json does not exist, please load controls first.', QMessageBox.Icon.Critical)
+			return
+		if not os.path.isfile(portsFile):
+			showMessage('Error', 'portdb.json does not exist, please dump ports first.', QMessageBox.Icon.Critical)
+			return
+		self.setCursor(Qt.CursorShape.WaitCursor)
+		self.update()
+		with open(cloneFile) as savedClones:
+			cloneDB = json.load(savedClones)
+		with open(controlFile) as savedControls:
+			controlDB = json.load(savedControls)
+		with open(portsFile) as savedPorts:
+			portDB = json.load(savedPorts)
+		listLoadProgress = QProgressDialog(f'0 / {len(cloneDB)} Complete', 'Cancel', 0, len(cloneDB) + 1)
+		listLoadProgress.setMinimumDuration(0)
+		listLoadProgress.setWindowModality(Qt.WindowModality.WindowModal)
+		listLoadProgress.setWindowTitle('Validation Progress')
+		listLoadProgress.forceShow()
+		missingPorts = []
+		fixPorts = []
+		missingLabels = []
+		fixLabels = []
+		for parent in cloneDB.keys():
+			if parent not in portDB.keys():
+				fixable = False
+				if 'clones' in cloneDB[parent].keys():
+					for portCheck in cloneDB[parent]['clones'].keys():
+						if portCheck in portDB.keys():
+							portDB[parent] = deepcopy(portDB[portCheck])
+							fixable = True
+							break
+				if fixable:
+					fixPorts.append(parent)
+				else:
+					missingPorts.append(parent)
+			if parent not in controlDB.keys():
+				fixable = False
+				if 'clones' in cloneDB[parent].keys():
+					for labelCheck in cloneDB[parent]['clones'].keys():
+						if labelCheck in controlDB.keys():
+							controlDB[parent] = deepcopy(controlDB[labelCheck])
+							fixable = True
+							break
+				if fixable:
+					fixLabels.append(parent)
+				else:
+					missingLabels.append(parent)
+			listLoadProgress.setValue(listLoadProgress.value() + 1)
+			listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {len(cloneDB)} Complete')
+		print(f'Missing Port Data (unmappable, will use defaults): {", ".join(missingPorts)}')
+		print(f'Corrected Port Data (Copied from clone, may be inaccurate): {", ".join(fixPorts)}')
+		print(f'Missing Control Labels (mappable, jump swap will not work): {", ".join(missingLabels)}')
+		print(f'Corrected Label Data (Copied from clone, may be inaccurate): {", ".join(fixLabels)}')
+		if len(fixPorts) > 0:
+			portsJson = json.dumps(portDB, indent=2)
+			jsonFile = open(portsFile,'w')
+			jsonFile.write(str(portJson))
+			jsonFile.close()
+		if len(fixLabels) > 0:
+			controlJson = json.dumps(controlDB, indent=2)
+			jsonFile = open(controlFile,'w')
+			jsonFile.write(str(controlJson))
+			jsonFile.close()
+		self.setCursor(Qt.CursorShape.ArrowCursor)
+		listLoadProgress.cancel()
+		showMessage('Complete', f'See console for details.\nUnmappable games will not be added during merge.')
+		self.buttonStatus()
+		return
 
 	def mergeData(self, s):
 		cloneFile = f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json'
 		controlFile = f'{scriptDir}{os.path.sep}data{os.path.sep}controldb.json'
+		portsFile = f'{scriptDir}{os.path.sep}data{os.path.sep}portdb.json'
 		mergedFile = f'{scriptDir}{os.path.sep}gamedata.json'
 		cloneDB = {}
 		controlDB = {}
@@ -455,37 +760,159 @@ class toolWindow(QDialog):
 			return
 		self.setCursor(Qt.CursorShape.WaitCursor)
 		self.update()
+		if not os.path.isfile(cloneFile):
+			showMessage('Error', 'gamedb.json does not exist, please load games first.', QMessageBox.Icon.Critical)
+			return
+		if not os.path.isfile(controlFile):
+			showMessage('Error', 'controldb.json does not exist, please load controls first.', QMessageBox.Icon.Critical)
+			return
+		if not os.path.isfile(portsFile):
+			showMessage('Error', 'portdb.json does not exist, please dump ports first.', QMessageBox.Icon.Critical)
+			return
+		self.setCursor(Qt.CursorShape.WaitCursor)
+		self.update()
 		with open(cloneFile) as savedClones:
 			cloneDB = json.load(savedClones)
-		with open(controlFile) as controlFile:
-			controlDB = json.load(controlFile)
-		for controlEntry in controlDB:
+		with open(controlFile) as savedControls:
+			controlDB = json.load(savedControls)
+		with open(portsFile) as savedPorts:
+			portDB = json.load(savedPorts)
+		totalRuns = len(cloneDB) + len(controlDB) + len(portDB)
+		listLoadProgress = QProgressDialog(f'0 / {totalRuns} Complete', 'Cancel', 0, totalRuns + 2)
+		listLoadProgress.setMinimumDuration(0)
+		listLoadProgress.setWindowModality(Qt.WindowModality.WindowModal)
+		listLoadProgress.setWindowTitle('Merge Progress')
+		listLoadProgress.forceShow()
+		removeWhenDone = []
+		# Add Controls
+		for controlEntry in controlDB.keys():
 			if controlEntry in cloneDB.keys():
 				if 'controls' not in cloneDB[controlEntry].keys():
 					cloneDB[controlEntry]['controls'] = {}
 				for inputData in controlDB[controlEntry]:
-					cloneDB[controlEntry]['controls'][inputData] = controlDB[controlEntry][inputData]
+					if inputData not in cloneDB[controlEntry]['controls'].keys():
+						cloneDB[controlEntry]['controls'][inputData] = {}
+					cloneDB[controlEntry]['controls'][inputData]['name'] = controlDB[controlEntry][inputData]
 			else:
 				if recursiveFind(cloneDB, controlEntry) != None:
 					parent = breadcrumb(cloneDB, controlEntry)[0]
 					if 'controls' not in cloneDB[parent].keys():
 						cloneDB[parent]['controls'] = {}
 					for inputData in controlDB[controlEntry]:
-						cloneDB[parent]['controls'][inputData] = controlDB[controlEntry][inputData]
+						if inputData not in cloneDB[controlEntry]['controls'].keys():
+							cloneDB[parent]['controls'][inputData] = {}
+						cloneDB[parent]['controls'][inputData]['name'] = controlDB[controlEntry][inputData]
+			listLoadProgress.setValue(listLoadProgress.value() + 1)
+			listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {totalRuns} Complete')
+			if listLoadProgress.wasCanceled():
+				os.chdir(scriptDir)
+				self.setCursor(Qt.CursorShape.ArrowCursor)
+				showMessage('Cancelled', 'Data not merged.')
+				self.buttonStatus()
+				return
+		for portEntry in portDB.keys():
+			if portEntry in cloneDB.keys():
+				if 'controls' not in cloneDB[portEntry].keys():
+					cloneDB[portEntry]['controls'] = {}
+				for portData in portDB[portEntry].keys():
+					if portData not in cloneDB[portEntry]['controls'].keys():
+						cloneDB[portEntry]['controls'][portData] = {}
+					cloneDB[portEntry]['controls'][portData]['tag'] = portDB[portEntry][portData]['tag']
+					cloneDB[portEntry]['controls'][portData]['mask'] = portDB[portEntry][portData]['mask']
+			else:
+				if recursiveFind(cloneDB, portEntry) != None:
+					parent = breadcrumb(cloneDB, portEntry)[0]
+					if 'controls' not in cloneDB[parent].keys():
+						cloneDB[parent]['controls'] = {}
+					for portData in portDB[parent].keys():
+						if portData not in cloneDB[parent]['controls']:
+							cloneDB[parent]['controls'][portData] = {}
+						cloneDB[parent]['controls'][portData]['tag'] = portDB[parent][portData]['tag']
+						cloneDB[parent]['controls'][portData]['mask'] = portDB[parent][portData]['mask']
+					if 'controls' not in cloneDB[parent]['clones'][portEntry].keys():
+						cloneDB[parent]['clones'][portEntry]['controls'] = {}
+					for portData in portDB[portEntry].keys():
+						if portData not in cloneDB[parent]['clones'][portEntry]['controls'].keys():
+							cloneDB[parent]['clones'][portEntry]['controls'][portData] = {}
+						cloneDB[parent]['clones'][portEntry]['controls'][portData]['tag'] = portDB[portEntry][portData]['tag']
+						cloneDB[parent]['clones'][portEntry]['controls'][portData]['mask'] = portDB[portEntry][portData]['mask']
+			listLoadProgress.setValue(listLoadProgress.value() + 1)
+			listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {totalRuns} Complete')
+			if listLoadProgress.wasCanceled():
+				os.chdir(scriptDir)
+				self.setCursor(Qt.CursorShape.ArrowCursor)
+				showMessage('Cancelled', 'Data not merged.')
+				self.buttonStatus()
+				return
+		removeGames = []
+		removeControls = {}
 		for parent in cloneDB.keys():
-			for clone in cloneDB[parent].keys():
-				if clone not in ['description', 'playercount', 'buttons', 'sticks', 'pedals', 'dials', 'paddles', 'trackball', \
-					'lightgun', 'mouse', 'mahjong', 'gambling', 'hanafuda', 'keyboard', 'mappings', 'unknown', 'controls']:
-						for key in ['playercount', 'buttons', 'sticks', 'pedals', 'dials', 'paddles', 'trackball', 'lightgun', \
-							'mouse', 'mahjong', 'gambling', 'hanafuda', 'keyboard', 'unknown', 'controls']:
-							if key in cloneDB[parent].keys() and key not in cloneDB[parent][clone].keys():
-								cloneDB[parent][clone][key] = cloneDB[parent][key]
+			removeControls[parent] = []
+			# Make sure port data exists for all controls
+			if 'controls' not in cloneDB[parent].keys() or len(cloneDB[parent]['controls'].keys()) == 0:
+				removeGames.append(parent)
+			else:
+				for control in cloneDB[parent]['controls'].keys():
+					if 'tag' not in cloneDB[parent]['controls'][control].keys() or 'mask'not in cloneDB[parent]['controls'][control].keys():
+						removeControls[parent].append(control)
+				# Copy missing entries from parent to clones if they don't exist.
+				if 'clones' in cloneDB[parent].keys():
+					for clone in cloneDB[parent]['clones'].keys():
+						for key in cloneDB[parent].keys():
+							if key not in cloneDB[parent]['clones'][clone].keys() and key != 'clones':
+								cloneDB[parent]['clones'][clone][key] = deepcopy(cloneDB[parent][key])
+						for control in cloneDB[parent]['controls'].keys():
+							if control not in cloneDB[parent]['clones'][clone]['controls'].keys():
+								cloneDB[parent]['clones'][clone]['controls'][control] = deepcopy(cloneDB[parent]['controls'][control])
+							if 'name' not in cloneDB[parent]['clones'][clone]['controls'][control].keys() and 'name' in cloneDB[parent]['controls'][control].keys():
+								cloneDB[parent]['clones'][clone]['controls'][control]['name'] = cloneDB[parent]['controls'][control]['name']
+			listLoadProgress.setValue(listLoadProgress.value() + 1)
+			listLoadProgress.setLabelText(f'{listLoadProgress.value()} / {totalRuns} Complete')
+			if listLoadProgress.wasCanceled():
+				os.chdir(scriptDir)
+				self.setCursor(Qt.CursorShape.ArrowCursor)
+				showMessage('Cancelled', 'Data not merged.')
+				self.buttonStatus()
+				return
+		for noControls in removeGames:
+			cloneDB.pop(noControls)
+		for noPorts in removeControls.keys():
+			if noPorts not in removeGames:
+				for control in removeControls[noPorts]:
+					cloneDB[noPorts]['controls'].pop(control)
+				if len(cloneDB[noPorts]['controls']) == 0:
+					cloneDB.pop(noPorts)
+
 		cloneJson = json.dumps(cloneDB, indent=2)
 		jsonFile = open(mergedFile,'w')
 		jsonFile.write(str(cloneJson))
 		jsonFile.close()
 		self.setCursor(Qt.CursorShape.ArrowCursor)
+		listLoadProgress.cancel()
 		showMessage('Complete', f'Game data & control data merged to {mergedFile}')
+
+	def buttonStatus(self):
+		gameDB = os.path.isfile(f'{scriptDir}{os.path.sep}data{os.path.sep}gamedb.json')
+		controlDB = os.path.isfile(f'{scriptDir}{os.path.sep}data{os.path.sep}controldb.json')
+		portDB = os.path.isfile(f'{scriptDir}{os.path.sep}data{os.path.sep}portdb.json')
+		if not gameDB:
+			self.mappingButton.setEnabled(False)
+			self.controlButton.setEnabled(False)
+			self.portsButton.setEnabled(False)
+			self.validateButton.setEnabled(False)
+			self.mergeButton.setEnabled(False)
+		elif gameDB and controlDB and portDB:
+			self.mappingButton.setEnabled(True)
+			self.controlButton.setEnabled(True)
+			self.portsButton.setEnabled(True)
+			self.validateButton.setEnabled(True)
+			self.mergeButton.setEnabled(True)
+		else:
+			self.mappingButton.setEnabled(True)
+			self.controlButton.setEnabled(True)
+			self.portsButton.setEnabled(True)
+			self.validateButton.setEnabled(False)
+			self.mergeButton.setEnabled(False)
 
 def recursiveFind(search_dict, field):
     if isinstance(search_dict, dict):
@@ -532,6 +959,13 @@ def getIfExists(checkDict, key, default=None):
 		return checkDict[key]
 	except:
 		return default
+
+def cloneCount(gameDB):
+	total = 0
+	for game in gameDB.keys():
+		if 'clones' in gameDB[game].keys():
+			total += len(gameDB[game]['clones'].keys())
+	return total
 
 if __name__ == '__main__':
 	global scriptDir

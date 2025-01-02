@@ -327,41 +327,44 @@ class mainWindow(QMainWindow):
 					iconList += controlEmoji['hanafuda']
 				if iconList == '' and int(getIfExists(gameData[game], 'buttons', 0)) > 0:
 					iconList += controlEmoji['button']
-				item = QListWidgetItem(f"{gameData[game]['description']}{iconList}")
+				if len(iconList) > 0:
+					item = QListWidgetItem(f"{gameData[game]['description']} [{iconList}]")
+				else:
+					item = QListWidgetItem(f"{gameData[game]['description']}")
 				item.setToolTip(game)
 				self.titleList.addItem(item)
 				if not parentOnly:
-					for clone in gameData[game].keys():
-						if clone not in notCloneKeys:
-							if 'description' in gameData[game][clone].keys():
+					if 'clones' in gameData[game].keys():
+						for clone in gameData[game]['clones'].keys():
+							if 'description' in gameData[game]['clones'][clone].keys():
 								iconList = ''
-								if 'sticks' in gameData[game][clone].keys():
-									for icon in range (0, getIfExists(gameData[game][clone], 'sticks', 0)):
+								if 'sticks' in gameData[game]['clones'][clone].keys():
+									for icon in range (0, getIfExists(gameData[game]['clones'][clone], 'sticks', 0)):
 										iconList += controlEmoji['joystick']
-								if 'dials' in gameData[game][clone].keys():
+								if 'dials' in gameData[game]['clones'][clone].keys():
 									iconList += controlEmoji['dial']
-								if 'paddles' in gameData[game][clone].keys():
+								if 'paddles' in gameData[game]['clones'][clone].keys():
 									iconList += controlEmoji['paddle']
-								if 'trackball' in gameData[game][clone].keys():
+								if 'trackball' in gameData[game]['clones'][clone].keys():
 									iconList += controlEmoji['trackball']
-								if 'lightgun' in gameData[game][clone].keys():
-									for icon in range (0, getIfExists(gameData[game][clone], 'lightgun', 0)):
+								if 'lightgun' in gameData[game]['clones'][clone].keys():
+									for icon in range (0, getIfExists(gameData[game]['clones'][clone], 'lightgun', 0)):
 										iconList += controlEmoji['lightgun']
-								if 'keyboard' in gameData[game][clone].keys():
+								if 'keyboard' in gameData[game]['clones'][clone].keys():
 									iconList += controlEmoji['keyboard']
-								if 'mouse' in gameData[game][clone].keys():
+								if 'mouse' in gameData[game]['clones'][clone].keys():
 									iconList += controlEmoji['mouse']
-								if 'pedals' in gameData[game][clone].keys():
+								if 'pedals' in gameData[game]['clones'][clone].keys():
 									iconList += controlEmoji['pedal']
-								if 'mahjong' in gameData[game][clone].keys():
+								if 'mahjong' in gameData[game]['clones'][clone].keys():
 									iconList += controlEmoji['mahjong']
-								if 'gambling' in gameData[game][clone].keys():
+								if 'gambling' in gameData[game]['clones'][clone].keys():
 									iconList += controlEmoji['gambling']
-								if 'hanafuda' in gameData[game][clone].keys():
+								if 'hanafuda' in gameData[game]['clones'][clone].keys():
 									iconList += controlEmoji['hanafuda']
 								if iconList == '' and getIfExists(gameData[game], 'buttons', 0) > 0:
 									iconList += controlEmoji['button']
-								item = QListWidgetItem(f"{gameData[game][clone]['description']}{iconList}")
+								item = QListWidgetItem(f"{gameData[game]['clones'][clone]['description']}{iconList}")
 								item.setToolTip(clone)
 								self.titleList.addItem(item)
 				gameCount += 1
@@ -715,10 +718,8 @@ class mainWindow(QMainWindow):
 		if currentGame == None:
 			return
 		shortName = currentGame.toolTip()
-		debugText(f'Looking up {currentGame.text()} - {currentGame.toolTip()}')
 		gameData = findGame(shortName)
 		gameControls = mapGameControls(shortName)
-		controlNames = getIfExists(gameData, 'controls')
 		maxPlayers = getIfExists(gameData, 'playercount')
 		if maxPlayers == None:
 			maxPlayers = 4
@@ -726,18 +727,24 @@ class mainWindow(QMainWindow):
 		debugText(f"{shortName} max players: {maxPlayers}, buttons: {getIfExists(gameData, 'buttons', 12)}")
 		for player in range(0, maxPlayers):
 			for control in gameControls[player].keys():
+				controlText = ''
 				if 'mamemap' in gameControls[player][control].keys():
-					if 'FACE' not in control and 'ANALOG_' not in control and getIfExists(controlNames, gameControls[player][control]['mamemap']) != None:
-						controlText = getIfExists(controlNames, gameControls[player][control]['mamemap'])
-					elif player > 0 and getIfExists(controlNames, gameControls[0][control]['mamemap']) != None:
-						controlText = getIfExists(controlNames, gameControls[0][control]['mamemap'])
+					if 'FACE' not in control and 'ANALOG_' not in control and getIfExists(gameControls[player][control], 'name'):
+						controlText = gameControls[player][control]['name'].title()
+					elif player > 0 and getIfExists(gameControls[0][control], 'name'):
+						controlText = gameControls[0][control]['name'].title()
 					else:
-						controlText = control
-					if controlInGame(gameData, gameControls[player][control]):
-						debugText(f"Adding {control} to the list: {gameControls[player][control]}")
-						item = QListWidgetItem(f"P{player + 1} {gameControls[player][control]['friendlyname']}: {controlText.upper()}")
-						item.setToolTip(gameControls[player][control]['mamemap'])
-						self.previewList.addItem(item)
+						controlText = control.title()
+				else:
+					controlText = control.title()
+				if len(controlText) >= 7 and controlText[0:6] == 'Button' and controlText[6] != ' ':
+					controlText = f'{controlText[0:6]} {controlText[6:]}'
+				debugText(f'Control Value: {control}, Control Text: {controlText}')
+				if controlInGame(gameData, gameControls[player][control]):
+					debugText(f"Adding {control} to the list: {gameControls[player][control]}")
+					item = QListWidgetItem(f"P{player + 1} {gameControls[player][control]['friendlyname']}: {controlText}")
+					item.setToolTip(gameControls[player][control]['mamemap'])
+					self.previewList.addItem(item)
 
 	def searchList(self, s):
 		debugText(f'Searching for {self.searchText.text()}')
@@ -1504,41 +1511,41 @@ class mainWindow(QMainWindow):
 				xmlInput = mainXML.createElement('input')
 				xmlSystem.appendChild(xmlInput)
 				for player in range(0, len(gameControls)):
+					if digitalAnalog == 1:
+						for analogControl in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y']:
+							if control == analogControl:
+								xmlPort = mainXML.createElement('port')
+								xmlPort.setAttribute('type', f'P{player + 1}_{analogControl}')
+								xmlIncrement = mainXML.createElement('newseq')
+								xmlIncrement.setAttribute('type', 'increment')
+								xmlPort.appendChild(xmlIncrement)
+								downData = mainXML.createTextNode(gameControls[player]['ANALOG_DOWN']['internalname'])
+								xmlIncrement.appendChild(downData)
+								xmlDecrement = mainXML.createElement('newseq')
+								xmlDecrement.setAttribute('type', 'decrement')
+								xmlPort.appendChild(xmlDecrement)
+								upData = mainXML.createTextNode(gameControls[player]['ANALOG_UP']['internalname'])
+								xmlDecrement.appendChild(upData)
+								xmlInput.appendChild(xmlPort)
+						for analogControl in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X']:
+							if control == analogControl:
+								xmlPort = mainXML.createElement('port')
+								xmlPort.setAttribute('type', f'P{player + 1}_{analogControl}')
+								xmlIncrement = mainXML.createElement('newseq')
+								xmlIncrement.setAttribute('type', 'increment')
+								xmlPort.appendChild(xmlIncrement)
+								rightData = mainXML.createTextNode(gameControls[player]['ANALOG_RIGHT']['internalname'])
+								xmlIncrement.appendChild(rightData)
+								xmlDecrement = mainXML.createElement('newseq')
+								xmlDecrement.setAttribute('type', 'decrement')
+								xmlPort.appendChild(xmlDecrement)
+								leftData = mainXML.createTextNode(gameControls[player]['ANALOG_LEFT']['internalname'])
+								xmlDecrement.appendChild(leftData)
+								xmlInput.appendChild(xmlPort)
 					for control in gameControls[player].keys():
 						debugText(control)
-						if 'ANALOG_' in control:
-							if digitalAnalog == 1:
-								if 'UP' in control:
-									for analogControl in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y']:
-										xmlPort = mainXML.createElement('port')
-										xmlPort.setAttribute('type', f'P{player + 1}_{analogControl}')
-										xmlIncrement = mainXML.createElement('newseq')
-										xmlIncrement.setAttribute('type', 'increment')
-										xmlPort.appendChild(xmlIncrement)
-										downData = mainXML.createTextNode(gameControls[player]['ANALOG_DOWN']['internalname'])
-										xmlIncrement.appendChild(downData)
-										xmlDecrement = mainXML.createElement('newseq')
-										xmlDecrement.setAttribute('type', 'decrement')
-										xmlPort.appendChild(xmlDecrement)
-										upData = mainXML.createTextNode(gameControls[player]['ANALOG_UP']['internalname'])
-										xmlDecrement.appendChild(upData)
-										xmlInput.appendChild(xmlPort)
-								if 'LEFT' in control:
-									for analogControl in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X']:
-										xmlPort = mainXML.createElement('port')
-										xmlPort.setAttribute('type', f'P{player + 1}_{analogControl}')
-										xmlIncrement = mainXML.createElement('newseq')
-										xmlIncrement.setAttribute('type', 'increment')
-										xmlPort.appendChild(xmlIncrement)
-										rightData = mainXML.createTextNode(gameControls[player]['ANALOG_RIGHT']['internalname'])
-										xmlIncrement.appendChild(rightData)
-										xmlDecrement = mainXML.createElement('newseq')
-										xmlDecrement.setAttribute('type', 'decrement')
-										xmlPort.appendChild(xmlDecrement)
-										leftData = mainXML.createTextNode(gameControls[player]['ANALOG_LEFT']['internalname'])
-										xmlDecrement.appendChild(leftData)
-										xmlInput.appendChild(xmlPort)
-						elif 'FACE' not in control and 'mamemap' in gameControls[player][control].keys():
+						if control not in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X', 'PADDLE_V', 'POSITIONAL_V', \
+							'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y', 'FACE', 'ANALOG_UP', 'ANALOG_DOWN', 'ANALOG_LEFT', 'ANALOG_RIGHT'] and 'mamemap' in gameControls[player][control].keys():
 							if getIfExists(gameControls[player][control], 'mamemap') != '':
 								xmlPort = mainXML.createElement('port')
 								xmlPort.setAttribute('type', gameControls[player][control]['mamemap'])
@@ -1599,6 +1606,8 @@ class mainWindow(QMainWindow):
 					with open(iniFile, 'w') as mameINI:
 						currentINI = mameINI.write(f'ctrlr                     {controllerTypes[selectedController]}')
 		else:
+			# Note - cfg files require tag/mask/default, ctrlr files don't.
+			# In theory, there should be no controls in the database without those values, but we check and only map those with, just in case.
 			for game in gamesToProcess:
 				gameControls = mapGameControls(game)
 				debugText(f'Creating xml for {game} ({gamesProcessed + 1}/{len(gamesToProcess)})...')
@@ -1618,44 +1627,82 @@ class mainWindow(QMainWindow):
 				xmlInput = mainXML.createElement('input')
 				xmlSystem.appendChild(xmlInput)
 				for player in range(0, len(gameControls)):
+					if digitalAnalog == 1 and game == 'default':
+						for analogControl in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y']:
+							xmlPort = mainXML.createElement('port')
+							xmlPort.setAttribute('type', f'P{player + 1}_{analogControl}')
+							xmlIncrement = mainXML.createElement('newseq')
+							xmlIncrement.setAttribute('type', 'increment')
+							xmlPort.appendChild(xmlIncrement)
+							downData = mainXML.createTextNode(gameControls[player]['ANALOG_DOWN']['internalname'])
+							xmlIncrement.appendChild(downData)
+							xmlDecrement = mainXML.createElement('newseq')
+							xmlDecrement.setAttribute('type', 'decrement')
+							xmlPort.appendChild(xmlDecrement)
+							upData = mainXML.createTextNode(gameControls[player]['ANALOG_UP']['internalname'])
+							xmlDecrement.appendChild(upData)
+							xmlInput.appendChild(xmlPort)
+						for analogControl in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X']:
+							xmlPort = mainXML.createElement('port')
+							xmlPort.setAttribute('type', f'P{player + 1}_{analogControl}')
+							xmlIncrement = mainXML.createElement('newseq')
+							xmlIncrement.setAttribute('type', 'increment')
+							xmlPort.appendChild(xmlIncrement)
+							rightData = mainXML.createTextNode(gameControls[player]['ANALOG_RIGHT']['internalname'])
+							xmlIncrement.appendChild(rightData)
+							xmlDecrement = mainXML.createElement('newseq')
+							xmlDecrement.setAttribute('type', 'decrement')
+							xmlPort.appendChild(xmlDecrement)
+							leftData = mainXML.createTextNode(gameControls[player]['ANALOG_LEFT']['internalname'])
+							xmlDecrement.appendChild(leftData)
+							xmlInput.appendChild(xmlPort)
 					for control in gameControls[player].keys():
-						debugText(control)
-						if 'ANALOG_' in control:
-							if digitalAnalog == 1:
-								if 'UP' in control:
-									for analogControl in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y']:
-										xmlPort = mainXML.createElement('port')
-										xmlPort.setAttribute('type', f'P{player + 1}_{analogControl}')
-										xmlIncrement = mainXML.createElement('newseq')
-										xmlIncrement.setAttribute('type', 'increment')
-										xmlPort.appendChild(xmlIncrement)
-										downData = mainXML.createTextNode(gameControls[player]['ANALOG_DOWN']['internalname'])
-										xmlIncrement.appendChild(downData)
-										xmlDecrement = mainXML.createElement('newseq')
-										xmlDecrement.setAttribute('type', 'decrement')
-										xmlPort.appendChild(xmlDecrement)
-										upData = mainXML.createTextNode(gameControls[player]['ANALOG_UP']['internalname'])
-										xmlDecrement.appendChild(upData)
-										xmlInput.appendChild(xmlPort)
-								if 'LEFT' in control:
-									for analogControl in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X']:
-										xmlPort = mainXML.createElement('port')
-										xmlPort.setAttribute('type', f'P{player + 1}_{analogControl}')
-										xmlIncrement = mainXML.createElement('newseq')
-										xmlIncrement.setAttribute('type', 'increment')
-										xmlPort.appendChild(xmlIncrement)
-										rightData = mainXML.createTextNode(gameControls[player]['ANALOG_RIGHT']['internalname'])
-										xmlIncrement.appendChild(rightData)
-										xmlDecrement = mainXML.createElement('newseq')
-										xmlDecrement.setAttribute('type', 'decrement')
-										xmlPort.appendChild(xmlDecrement)
-										leftData = mainXML.createTextNode(gameControls[player]['ANALOG_LEFT']['internalname'])
-										xmlDecrement.appendChild(leftData)
-										xmlInput.appendChild(xmlPort)
-						elif 'FACE' not in control:
-							if getIfExists(gameControls[player][control], 'mamemap', None) != None:
+						debugText(f'Currently adding: {game} - {control}')
+						if control in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X'] and digitalAnalog == 1:
+							xmlPort = mainXML.createElement('port')
+							xmlPort.setAttribute('type', f'P{player + 1}_{control}')
+							if f'P{player + 1}_{analogControl}' in gameControls[player].keys():
+								xmlPort.setAttribute('mask', gameControls[player][f'P{player + 1}_{control}']['mask'])
+								xmlPort.setAttribute('tag', gameControls[player][f'P{player + 1}_{control}']['tag'])
+								xmlPort.setAttribute('defvalue', '0')
+							xmlIncrement = mainXML.createElement('newseq')
+							xmlIncrement.setAttribute('type', 'increment')
+							xmlPort.appendChild(xmlIncrement)
+							rightData = mainXML.createTextNode(gameControls[player]['ANALOG_RIGHT']['internalname'])
+							xmlIncrement.appendChild(rightData)
+							xmlDecrement = mainXML.createElement('newseq')
+							xmlDecrement.setAttribute('type', 'decrement')
+							xmlPort.appendChild(xmlDecrement)
+							leftData = mainXML.createTextNode(gameControls[player]['ANALOG_LEFT']['internalname'])
+							xmlDecrement.appendChild(leftData)
+							xmlInput.appendChild(xmlPort)
+						elif control in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y'] and digitalAnalog == 1:
+							xmlPort = mainXML.createElement('port')
+							xmlPort.setAttribute('type', f'P{player + 1}_{control}')
+							if f'P{player + 1}_{analogControl}' in gameControls[player].keys():
+								xmlPort.setAttribute('mask', gameControls[player][f'P{player + 1}_{control}']['mask'])
+								xmlPort.setAttribute('tag', gameControls[player][f'P{player + 1}_{control}']['tag'])
+								xmlPort.setAttribute('defvalue', '0')
+							xmlIncrement = mainXML.createElement('newseq')
+							xmlIncrement.setAttribute('type', 'increment')
+							xmlPort.appendChild(xmlIncrement)
+							downData = mainXML.createTextNode(gameControls[player]['ANALOG_DOWN']['internalname'])
+							xmlIncrement.appendChild(downData)
+							xmlDecrement = mainXML.createElement('newseq')
+							xmlDecrement.setAttribute('type', 'decrement')
+							xmlPort.appendChild(xmlDecrement)
+							upData = mainXML.createTextNode(gameControls[player]['ANALOG_UP']['internalname'])
+							xmlDecrement.appendChild(upData)
+							xmlInput.appendChild(xmlPort)
+						elif control not in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X', 'PADDLE_V', 'POSITIONAL_V', \
+							'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y', 'FACE', 'ANALOG_UP', 'ANALOG_DOWN', 'ANALOG_LEFT', 'ANALOG_RIGHT'] and 'mamemap' in gameControls[player][control].keys():
+							if game == 'default' or 'mask' in gameControls[player][control].keys():
 								xmlPort = mainXML.createElement('port')
 								xmlPort.setAttribute('type', gameControls[player][control]['mamemap'])
+								if 'mask' in gameControls[player][control].keys():
+									xmlPort.setAttribute('tag', gameControls[player][control]['tag'])
+									xmlPort.setAttribute('mask', gameControls[player][control]['mask'])
+									xmlPort.setAttribute('defvalue', gameControls[player][control]['mask'])
 								xmlNewseq = mainXML.createElement('newseq')
 								xmlNewseq.setAttribute('type', 'standard')
 								xmlPort.appendChild(xmlNewseq)
@@ -1910,16 +1957,16 @@ def loadGameData():
 				gameData[game]['buttons'] = int(gameData[game]['buttons'])
 			if 'sticks' in gameData[game].keys():
 				gameData[game]['sticks'] = int(gameData[game]['sticks'])
-			for clone in gameData[game].keys():
-				if clone not in notCloneKeys:
-					if 'playercount' in gameData[game][clone].keys():
-						gameData[game][clone]['playercount'] = int(gameData[game][clone]['playercount'])
-					if 'buttons' in gameData[game][clone].keys():
-						gameData[game][clone]['buttons'] = int(gameData[game][clone]['buttons'])
-					if 'sticks' in gameData[game][clone].keys():
-						gameData[game][clone]['sticks'] = int(gameData[game][clone]['sticks'])
-					if 'lightgun' in gameData[game][clone].keys():
-						gameData[game][clone]['lightgun'] = int(gameData[game][clone]['lightgun'])
+			if 'clones' in gameData[game].keys():
+				for clone in gameData[game]['clones'].keys():
+					if 'playercount' in gameData[game]['clones'][clone].keys():
+						gameData[game]['clones'][clone]['playercount'] = int(gameData[game]['clones'][clone]['playercount'])
+					if 'buttons' in gameData[game]['clones'][clone].keys():
+						gameData[game]['clones'][clone]['buttons'] = int(gameData[game]['clones'][clone]['buttons'])
+					if 'sticks' in gameData[game]['clones'][clone].keys():
+						gameData[game]['clones'][clone]['sticks'] = int(gameData[game]['clones'][clone]['sticks'])
+					if 'lightgun' in gameData[game]['clones'][clone].keys():
+						gameData[game]['clones'][clone]['lightgun'] = int(gameData[game]['clones'][clone]['lightgun'])
 		gameLoadProgress.setValue(lineCount + 1)
 	else:
 		showMessage('Missing File', f'File {gameFile} could not be found.\nPlease reinstall MAMEMapper or replace the data file.', QMessageBox.Icon.Critical)
@@ -2011,25 +2058,24 @@ def generateRemapList():
 				if singleButton and getIfExists(gameData[game], 'buttons', 0) == 1:
 					gameList.append(game)
 			if not parentOnly:
-				for clone in gameData[game].keys():
-					if clone not in notCloneKeys:
-						if saveDefault == 1:
-							gameList.append(clone)
-						else:
-							debugText(f'Checking {game}/{clone}...')
-							if 'mappings' in gameData[game][clone].keys():
-								for mapping in gameData[game][clone]['mappings']:
-									if mapping in mappingShortNames:
-										gameList.append(clone)
-							elif getIfExists(gameData[game][clone], 'buttons') == 4 and neogeo == 1 and 'Neo Geo' in applyMappings:
-								gameList.append(clone)
-							if remap4p and getIfExists(gameData[game][clone], 'playercount', 2) >= 3:
-								gameList.append(clone)
-							if 'controls' in gameData[game][clone].keys():
-								if swapPrimary and getIfExists(gameData[game][clone]['controls'], 'P1_BUTTON1') in ['Jump', 'A']:
+				for clone in gameData[game]['clones'].keys():
+					if saveDefault == 1:
+						gameList.append(clone)
+					else:
+						debugText(f'Checking {game}/{clone}...')
+						if 'mappings' in gameData[game]['clones'][clone].keys():
+							for mapping in gameData[game]['clones'][clone]['mappings']:
+								if mapping in mappingShortNames:
 									gameList.append(clone)
-							if singleButton and getIfExists(gameData[game][clone], 'buttons', 0) == 1:
+						elif getIfExists(gameData[game]['clones'][clone], 'buttons') == 4 and neogeo == 1 and 'Neo Geo' in applyMappings:
+							gameList.append(clone)
+						if remap4p and getIfExists(gameData[game]['clones'][clone], 'playercount', 2) >= 3:
+							gameList.append(clone)
+						if 'controls' in gameData[game]['clones'][clone].keys():
+							if swapPrimary and getIfExists(gameData[game]['clones'][clone]['controls'], 'P1_BUTTON1') in ['Jump', 'A']:
 								gameList.append(clone)
+						if singleButton and getIfExists(gameData[game]['clones'][clone], 'buttons', 0) == 1:
+							gameList.append(clone)
 	# Clear duplicates if any
 	gameList = list(dict.fromkeys(gameList))
 	debugText(f'{len(gameList)} games found to process with current settings.')
@@ -2209,12 +2255,8 @@ def mapGameControls(game):
 							playerControls[player][f'BUTTON{button}']['internalname'] = f"{playerControls[player][f'BUTTON{button}']['internalname']} OR GUNCODE{player + 1}_BUTTON{button} OR MOUSECODE{player + 1}_BUTTON{button}"
 				if digitalAnalog == 1:
 					for direction in [ 'UP', 'DOWN', 'LEFT', 'RIGHT']:
-						if direction in copyFrom.keys():
-							playerControls[player][f'ANALOG_{direction}'] = {}
-							if 'KEYCODE_' not in copyFrom[direction]['internalname']:
-								playerControls[player][f'ANALOG_{direction}']['internalname'] = f"JOYCODE_{player + 1}_{copyFrom[direction]['internalname']}"
-							else:
-								playerControls[player][f'ANALOG_{direction}']['internalname'] = copyFrom[direction]['internalname']
+						if direction in playerControls[player].keys():
+							playerControls[player][f'ANALOG_{direction}'] = deepcopy(playerControls[player][direction])
 			else:
 				playerControls.append({})
 
@@ -2373,6 +2415,43 @@ def mapGameControls(game):
 				playerControls = deepcopy(swapControls)
 		except:
 			debugText('No player number in game data or less than 4 players.')
+		# Copy tag/mask from original controls
+		for player in range(0, len(playerControls)):
+			for control in playerControls[player].keys():
+				if control in ['COIN', 'START']:
+					originalName = f'{control}{player + 1}'
+				elif control in ['UP', 'DOWN', 'LEFT', 'RIGHT']:
+					originalName = f'P{player + 1}_JOYSTICK_{control}'
+				else:
+					originalName = f'P{player + 1}_{control}'
+				if originalName in gameDetails['controls'].keys():
+					debugText(f'Copying additional entries from {gameDetails['controls'][originalName]} {playerControls[player][control]}')
+					for key in gameDetails['controls'][originalName]:
+						if key in gameDetails['controls'][originalName].keys() and key not in playerControls[player][control].keys():
+							debugText(f'Key {key} not found in new control, copying.')
+							playerControls[player][control][key] = gameDetails['controls'][originalName][key]
+			# Tag/Mask for Analog Controls
+			for analogControl in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y', 'PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL_X', 'AD_STICK_X', 'LIGHTGUN_X', 'MOUSE_X']:
+				originalName = f'P{player + 1}_{analogControl}'
+				if originalName in gameDetails['controls'].keys():
+					playerControls[player][analogControl] = deepcopy(gameDetails['controls'][originalName])
+					playerControls[player][analogControl]['mamemap'] = originalName
+					playerControls[player][analogControl]['internalname'] = originalName
+					if 'name' not in playerControls[player][analogControl].keys():
+						p1Control = f'P1_{analogControl}'
+						if p1Control in gameDetails['controls'].keys() and 'name' in p1Control in gameDetails['controls'][p1Control].keys():
+							playerControls[player][analogControl]['name'] = gameDetails['controls'][p1Control]['name']
+						else:
+							for analogType in ['PADDLE', 'POSITIONAL', 'DIAL', 'TRACKBALL', 'AD_STICK', 'LIGHTGUN', 'MOUSE']:
+								if analogType in analogControl:
+									playerControls[player][analogControl]['name'] = analogType.title()
+					if digitalAnalog:
+						if analogControl in ['PADDLE_V', 'POSITIONAL_V', 'DIAL_V', 'TRACKBALL_Y', 'AD_STICK_Y', 'LIGHTGUN_Y', 'MOUSE_Y']:
+							playerControls[player][analogControl]['friendlyname'] = f'{playerControls[player]['UP']['friendlyname']} &\n{playerControls[player]['DOWN']['friendlyname']}'
+						else:
+							playerControls[player][analogControl]['friendlyname'] = f'{playerControls[player]['LEFT']['friendlyname']} &\n{playerControls[player]['RIGHT']['friendlyname']}'
+					else:
+						playerControls[player][analogControl]['friendlyName'] = getIfExists(playerControls[player][analogControl], 'name', 'Analog Device')
 
 	debugText(f'Controls after mapping:\n{playerControls}')
 	return playerControls
@@ -2394,8 +2473,9 @@ def findGame(romName):
 		return None
 	else:
 		for game in gameData.keys():
-			if romName in gameData[game].keys():
-				return gameData[game][romName]
+			if 'clones' in gameData[game].keys():
+				if romName in gameData[game]['clones'].keys():
+					return gameData[game]['clones'][romName]
 	print(f'Error: Could not find {romName} in game DB!')
 	cancelPressed = True
 	return None
@@ -2414,14 +2494,24 @@ def shortNameExists(shortName):
 
 def controlInGame(gameData, control):
 	debugText(f"Checking {gameData['description']} for {control}")
+	if 'mask' not in control.keys():
+		debugText('No MAME port data.')
+		return False
+	if 'mamemap' not in control.keys():
+		debugText('No MAME control name.')
+		return False
 	if fnmatch.fnmatch(control['mamemap'], f'P?_*') and int(control['mamemap'][1]) > int(getIfExists(gameData, 'playercount', 4)):
+		debugText(f'Player # {control["mamemap"][1]} control, max players {getIfExists(gameData, "playercount", 4)}')
 		return False
 	if (control['mamemap'].startswith('COIN') or control['mamemap'].startswith('START')) and int(control['mamemap'][-1]) > int(getIfExists(gameData, 'playercount', 4)):
+		debugText(f'Player # {control["mamemap"][-1]} control, max players {getIfExists(gameData, "playercount", 4)}')
 		return False
 	for direction in ['UP', 'DOWN', 'LEFT', 'RIGHT']:
-		if fnmatch.fnmatch(control['mamemap'], f'P?_{direction}') and getIfExists(gameData, 'sticks', 1) != 1:
+		if fnmatch.fnmatch(control['mamemap'], f'P?_{direction}') and getIfExists(gameData, 'sticks', 0) != 1:
+			debugText(f'Joystick direction in {getIfExists(gameData, "sticks", 1)} stick game')
 			return False
 	if ('JOYSTICKLEFT_' in control['mamemap'] or 'JOYSTICKRIGHT_' in control['mamemap']) and getIfExists(gameData, 'sticks', 1) != 2:
+		debugText(f'Left Stick or Right Stick direction in {getIfExists(gameData, "sticks", 1)} stick game')
 		return False
 	if 'BUTTON' in control['mamemap']:
 		buttonCount = getIfExists(gameData, 'buttons', 12)
@@ -2430,8 +2520,10 @@ def controlInGame(gameData, control):
 		else:
 			buttonNum = int(control['mamemap'][-1])
 		if buttonNum > buttonCount:
+			debugText(f'Button {buttonNum} in {getIfExists(gameData, "buttons", 12)} button game')
 			return False
 	if control['mamemap'] == '':
+		debugText('Blank MAME control name.')
 		return False
 	return True
 
@@ -2532,9 +2624,9 @@ def saveConfig():
 		config.write(writeConfig)
 
 def getIfExists(checkDict, key, default=None):
-	try:
+	if key in checkDict.keys():
 		return checkDict[key]
-	except:
+	else:
 		return default
 
 def debugText(text):
@@ -2582,7 +2674,6 @@ if __name__ == '__main__':
 	global mappingData
 	global fixedDevices
 	global controlEmoji
-	global notCloneKeys
 
 	version = "0.04"
 	printDebugMessages = False
@@ -2632,11 +2723,10 @@ if __name__ == '__main__':
 	neogeo = 0
 	inputDevices = { 'joystick': {}, 'lightgun': {}, 'keyboard': {}, 'mouse': {} }
 	fixedDevices = { 'joystick': {}, 'lightgun': {}, 'keyboard': {}, 'mouse': {} }
-	controlEmoji = { 'joystick': '\U0001F579', 'lightgun': '\U0001F52B', 'keyboard': '\U00002328', 'mouse': '\U0001F5B1', 'trackball': '\U0001F5B2', 'paddle': '\U0001F3D3', \
-		'dial': '\U0001F55B', 'pedal': '\U0001F3CE', 'hanafuda': '\U0001F3B4', 'gambling': '\U0001F0CF', 'mahjong': '\U0001F004', 'button': '\U0001F534', 'unknown': '\U00002753' }
-	notCloneKeys = ['description', 'playercount', 'buttons', 'sticks', 'pedals', 'dials', 'paddles', 'trackball', 'lightgun', 'mouse', 'mahjong', 'gambling', 'hanafuda', \
-		'keyboard', 'mappings', 'unknown', 'controls']
-
+	#controlEmoji = { 'joystick': '\U0001F579', 'lightgun': '\U0001F52B', 'keyboard': '\U00002328', 'mouse': '\U0001F5B1', 'trackball': '\U0001F5B2', 'paddle': '\U0001F3D3', \
+	#	'dial': '\U0001F55B', 'pedal': '\U0001F3CE', 'hanafuda': '\U0001F3B4', 'gambling': '\U0001F0CF', 'mahjong': '\U0001F004', 'button': '\U0001F534', 'unknown': '\U00002753' }
+	controlEmoji = { 'joystick': '🕹️', 'lightgun': '🔫', 'keyboard': '⌨️', 'mouse': '🖱️', 'trackball': '🖲️', 'paddle': '🏓', \
+		'dial': '🕛', 'pedal': '🏎️', 'hanafuda': '🎴', 'gambling': '🎲', 'mahjong': '🀄', 'button': '🔘', 'unknown': '❓' }
 	mameDir = ''
 	configFile = f'{scriptDir}{os.path.sep}MAMEMapper.ini'
 	logFile = f'{scriptDir}{os.path.sep}MAMEMapper.log'

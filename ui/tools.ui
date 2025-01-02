@@ -7,8 +7,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>259</width>
-    <height>192</height>
+    <width>262</width>
+    <height>282</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
      <x>10</x>
      <y>10</y>
      <width>241</width>
-     <height>141</height>
+     <height>231</height>
     </rect>
    </property>
    <property name="title">
@@ -34,7 +34,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>50</y>
+      <y>80</y>
       <width>221</width>
       <height>24</height>
      </rect>
@@ -47,7 +47,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>80</y>
+      <y>110</y>
       <width>221</width>
       <height>24</height>
      </rect>
@@ -60,7 +60,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>110</y>
+      <y>140</y>
       <width>221</width>
       <height>24</height>
      </rect>
@@ -72,9 +72,9 @@
    <widget class="QPushButton" name="xmlButton">
     <property name="geometry">
      <rect>
-      <x>14</x>
-      <y>20</y>
-      <width>211</width>
+      <x>10</x>
+      <y>50</y>
+      <width>221</width>
       <height>24</height>
      </rect>
     </property>
@@ -82,12 +82,51 @@
      <string>Load mame.xml File</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="portsButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>170</y>
+      <width>221</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Dump Ports from MAME</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="dumpXMLButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>221</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Dump mame.xml from MAME</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="validateButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>200</y>
+      <width>221</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Validate Complete Data</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QPushButton" name="mergeButton">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>160</y>
+     <y>250</y>
      <width>241</width>
      <height>24</height>
     </rect>
@@ -98,10 +137,13 @@
   </widget>
  </widget>
  <tabstops>
+  <tabstop>dumpXMLButton</tabstop>
   <tabstop>xmlButton</tabstop>
   <tabstop>cloneButton</tabstop>
   <tabstop>controlButton</tabstop>
   <tabstop>mappingButton</tabstop>
+  <tabstop>portsButton</tabstop>
+  <tabstop>validateButton</tabstop>
   <tabstop>mergeButton</tabstop>
  </tabstops>
  <resources/>

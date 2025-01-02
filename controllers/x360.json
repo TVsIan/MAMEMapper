@@ -34,21 +34,21 @@
     "friendlyname":"RSB"},
     "COIN": {
     "internalname":"BUTTON8",
-    "friendlyname":"View"},
+    "friendlyname":"START"},
     "START": {
     "internalname":"BUTTON7",
-    "friendlyname":"Menu"},
+    "friendlyname":"SELECT"},
     "UP": {
-    "internalname":"DPADUP",
+    "internalname":"HAT1UP",
     "friendlyname":"D-Pad Up"},
     "DOWN": {
-    "internalname":"DPADDOWN",
+    "internalname":"HAT1DOWN",
     "friendlyname":"D-Pad Down"},
     "LEFT": {
-    "internalname":"DPADLEFT",
+    "internalname":"HAT1LEFT",
     "friendlyname":"D-Pad Left"},
     "RIGHT": {
-    "internalname":"DPADRIGHT",
+    "internalname":"HAT1RIGHT",
     "friendlyname":"D-Pad Right"},
     "JOYSTICKLEFT_UP": {
     "internalname":"YAXIS_UP_SWITCH",
