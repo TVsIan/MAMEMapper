@@ -2095,24 +2095,25 @@ def generateRemapList():
 				if singleButton and getIfExists(gameData[game], 'buttons', 0) == 1:
 					gameList.append(game)
 			if not parentOnly:
-				for clone in gameData[game]['clones'].keys():
-					if saveDefault == 1:
-						gameList.append(clone)
-					else:
-						debugText(f'Checking {game}/{clone}...')
-						if 'mappings' in gameData[game]['clones'][clone].keys():
-							for mapping in gameData[game]['clones'][clone]['mappings']:
-								if mapping in mappingShortNames:
-									gameList.append(clone)
-						elif getIfExists(gameData[game]['clones'][clone], 'buttons') == 4 and neogeo == 1 and 'Neo Geo' in applyMappings:
+				if 'clones' in gameData[game].keys():
+					for clone in gameData[game]['clones'].keys():
+						if saveDefault == 1:
 							gameList.append(clone)
-						if remap4p and getIfExists(gameData[game]['clones'][clone], 'playercount', 2) >= 3:
-							gameList.append(clone)
-						if 'controls' in gameData[game]['clones'][clone].keys():
-							if swapPrimary and getIfExists(gameData[game]['clones'][clone]['controls'], 'P1_BUTTON1') in ['Jump', 'A']:
+						else:
+							debugText(f'Checking {game}/{clone}...')
+							if 'mappings' in gameData[game]['clones'][clone].keys():
+								for mapping in gameData[game]['clones'][clone]['mappings']:
+									if mapping in mappingShortNames:
+										gameList.append(clone)
+							elif getIfExists(gameData[game]['clones'][clone], 'buttons') == 4 and neogeo == 1 and 'Neo Geo' in applyMappings:
 								gameList.append(clone)
-						if singleButton and getIfExists(gameData[game]['clones'][clone], 'buttons', 0) == 1:
-							gameList.append(clone)
+							if remap4p and getIfExists(gameData[game]['clones'][clone], 'playercount', 2) >= 3:
+								gameList.append(clone)
+							if 'controls' in gameData[game]['clones'][clone].keys():
+								if swapPrimary and getIfExists(gameData[game]['clones'][clone]['controls'], 'P1_BUTTON1') in ['Jump', 'A']:
+									gameList.append(clone)
+							if singleButton and getIfExists(gameData[game]['clones'][clone], 'buttons', 0) == 1:
+								gameList.append(clone)
 	# Clear duplicates if any
 	gameList = list(dict.fromkeys(gameList))
 	debugText(f'{len(gameList)} games found to process with current settings.')
