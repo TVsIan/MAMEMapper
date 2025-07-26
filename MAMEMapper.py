@@ -2737,7 +2737,7 @@ if __name__ == '__main__':
 	global fixedDevices
 	global controlEmoji
 
-	version = "0.06"
+	version = "0.06.01"
 	printDebugMessages = False
 	scriptDir = os.path.dirname(os.path.abspath(sys.argv[0]))
 
